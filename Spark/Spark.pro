@@ -12,9 +12,29 @@ TARGET = Spark
 TEMPLATE = app
 
 
-SOURCES += main.cpp\
-        spark.cpp
+SOURCES += src/app/main.cpp\
+            src/app/spark.cpp \
+            src/mid/mid_can.cpp \
+            src/mid/mid_bits.cpp \
+            src/mid/mid_list.cpp
 
-HEADERS  += spark.h
+HEADERS  += src/app/spark.h \
+            src/driver/canlib.h \
+            src/driver/canevt.h \
+            src/driver/canstat.h \
+            src/driver/obsolete.h \
+            src/driver/predef.h \
+            src/mid/mid_can.h \
+            src/mid/comm_typedef.h \
+            src/mid/mid_bits.h \
+            src/mid/mid_list.h
 
-FORMS    += spark.ui
+LIBS += canlib32.dll
+
+message("Please copy 'canlib32.dll' from source to build directory")
+
+DISTFILES += src/driver/canlib32.dll
+
+RC_FILE = src/ui/ico.rc
+
+FORMS    += src/ui/spark.ui
