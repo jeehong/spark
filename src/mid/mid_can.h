@@ -27,6 +27,7 @@ struct can_bus_frame_t
     unsigned int squ;
     unsigned char buf[MAX_DLC];
     unsigned long time_stamp;
+    unsigned long delta_time_stamp;
 };
 
 void mid_can_refresh_device(void);

@@ -32,8 +32,8 @@ Spark::Spark(QMainWindow *parent) :
     rx_parse->factor = 0;
     rx_parse->offset = 0;
     fixed_posions = FALSE;
-    rx_accept_id = U32_INVALID_VALUE;
-    rx_reject_id = U32_INVALID_VALUE;
+    rx_accept_id = 0;
+    rx_reject_id = 0;
     on_pushButton_10_clicked();
     rx_dec_display = FALSE;
     mid_can_init(CAN_DEVICE_KVASER);
@@ -48,7 +48,6 @@ Spark::~Spark()
 
 void Spark::update_rx_parse_line(const struct can_bus_frame_t *frame)
 {
-    QStandardItem *newItem;
     QString string;
     struct list_element_t *list;
     struct mid_data_config_t *parse_element;
@@ -62,37 +61,30 @@ void Spark::update_rx_parse_line(const struct can_bus_frame_t *frame)
         if(parse_element->id == frame->id)
         {
             string = QString("%1").arg(counter, 10, 10, QLatin1Char('0'));
-            newItem = new QStandardItem(string);
-            rx_parse_model->setItem(counter, 0, newItem);
+            rx_parse_model->item(counter, 0)->setText(string);
 
             string = QString("%1").arg(frame->id, 8, 16, QLatin1Char('0')).toUpper();
-            newItem = new QStandardItem(string);
-            rx_parse_model->setItem(counter, 1, newItem);
+            rx_parse_model->item(counter, 1)->setText(string);
 
             string = QString("%1").arg(parse_element->start_bit, 2, 10, QLatin1Char('0')).toUpper();
-            newItem = new QStandardItem(string);
-            rx_parse_model->setItem(counter, 2, newItem);
+            rx_parse_model->item(counter, 2)->setText(string);
 
             string = QString("%1").arg(parse_element->bits_length, 2, 10, QLatin1Char('0')).toUpper();
-            newItem = new QStandardItem(string);
-            rx_parse_model->setItem(counter, 3, newItem);
+            rx_parse_model->item(counter, 3)->setText(string);
 
-            newItem = new QStandardItem(string.number(parse_element->factor, 'g', 6));
-            rx_parse_model->setItem(counter, 4, newItem);
+            rx_parse_model->item(counter, 4)->setText(string.number(parse_element->factor, 'g', 6));
 
-            newItem = new QStandardItem(string.number(parse_element->offset, 'g', 6));
-            rx_parse_model->setItem(counter, 5, newItem);
+            rx_parse_model->item(counter, 5)->setText(string.number(parse_element->offset, 'g', 6));
 
             mid_data_can_calc(parse_element, (U8*)&frame->buf[0], frame->dlc);
 
-            newItem = new QStandardItem(string.number(parse_element->row, 'g', 6));
-            rx_parse_model->setItem(counter, 6, newItem);
+            rx_parse_model->item(counter, 6)->setText(string.number(parse_element->row, 'g', 6));
 
-            newItem = new QStandardItem(string.number(parse_element->phy, 'g', 6));
-            rx_parse_model->setItem(counter, 7, newItem);
+            rx_parse_model->item(counter, 7)->setText(string.number(parse_element->phy, 'g', 6));
 
-            newItem = new QStandardItem(string.number(frame->time_stamp / 1000.0, 'g', 6));
-            rx_parse_model->setItem(counter, 8, newItem);
+            rx_parse_model->item(counter, 8)->setText(string.number(frame->time_stamp / 1000.0, 'g', 10));
+
+            rx_parse_model->item(counter, 9)->setText(string.number(frame->delta_time_stamp / 1000.0, 'g', 10));
 
             rx_parse_table->setRowHeight(counter, 20);
 
@@ -111,7 +103,6 @@ void Spark::update_receive_message_window()
     QStandardItem *newItem;
     const struct can_bus_frame_t *can_frame;
     QString string;
-    U32 counter = 0;
     U32 format = rx_dec_display == TRUE ? 10 : 16;
 
     if(fixed_posions == TRUE)
@@ -122,12 +113,12 @@ void Spark::update_receive_message_window()
         refresh_rx_window == TRUE && can_frame != NULL;
         can_frame = mid_can_new_frame())
     {
-        if(rx_accept_id != U32_INVALID_VALUE
+        if(rx_accept_id != 0
                 && can_frame->id != rx_accept_id)
         {
             continue;
         }
-        if(rx_reject_id != U32_INVALID_VALUE
+        if(rx_reject_id != 0
                 && can_frame->id == rx_reject_id)
         {
             continue;
@@ -142,60 +133,55 @@ void Spark::update_receive_message_window()
             {
                 msgs[msgs_index].mutex_val = can_frame->id;
                 msgs[msgs_index].line_num = msgs_index;
+                for(int index = 0; index < RX_WINDOW_ITEMS; index ++)
+                {
+                    newItem = new QStandardItem;
+                    newItem->setTextAlignment(Qt::AlignCenter);
+                    rx_msg_model->setItem(msgs_index, index, newItem);
+                }
                 break;
             }
         }
-        string = QString("%1").arg(msgs[msgs_index].line_num, 10, 10, QLatin1Char('0'));
-        newItem = new QStandardItem(string);
-        rx_msg_model->setItem(msgs[msgs_index].line_num, 0, newItem);
 
-        newItem = new QStandardItem(string.number(can_frame->chn, 10));
-        rx_msg_model->setItem(msgs[msgs_index].line_num, 1, newItem);
+        string = QString("%1").arg(msgs[msgs_index].line_num, 10, 10, QLatin1Char('0'));
+        rx_msg_model->item(msgs[msgs_index].line_num, 0)->setText(string);
+
+        rx_msg_model->item(msgs[msgs_index].line_num, 1)->setText(string.number(can_frame->chn, 10));
 
         string = QString("%1").arg(can_frame->id, 8, 16, QLatin1Char('0')).toUpper();
-        newItem = new QStandardItem(string);
-        rx_msg_model->setItem(msgs[msgs_index].line_num, 2, newItem);
+        rx_msg_model->item(msgs[msgs_index].line_num, 2)->setText(string);
 
-        newItem = new QStandardItem(string.number(can_frame->flag, 10));
-        rx_msg_model->setItem(msgs[msgs_index].line_num, 3, newItem);
+        rx_msg_model->item(msgs[msgs_index].line_num, 3)->setText(string.number(can_frame->flag, 10));
 
-        newItem = new QStandardItem(string.number(can_frame->dlc, 10));
-        rx_msg_model->setItem(msgs[msgs_index].line_num, 4, newItem);
+        rx_msg_model->item(msgs[msgs_index].line_num, 4)->setText(string.number(can_frame->dlc, 10));
 
         string = QString("%1").arg(can_frame->buf[0], 2, format, QLatin1Char('0')).toUpper();
-        newItem = new QStandardItem(string);
-        rx_msg_model->setItem(msgs[msgs_index].line_num, 5, newItem);
+        rx_msg_model->item(msgs[msgs_index].line_num, 5)->setText(string);
 
         string = QString("%1").arg(can_frame->buf[1], 2, format, QLatin1Char('0')).toUpper();
-        newItem = new QStandardItem(string);
-        rx_msg_model->setItem(msgs[msgs_index].line_num, 6, newItem);
+        rx_msg_model->item(msgs[msgs_index].line_num, 6)->setText(string);
 
         string = QString("%1").arg(can_frame->buf[2], 2, format, QLatin1Char('0')).toUpper();
-        newItem = new QStandardItem(string);
-        rx_msg_model->setItem(msgs[msgs_index].line_num, 7, newItem);
+        rx_msg_model->item(msgs[msgs_index].line_num, 7)->setText(string);
 
         string = QString("%1").arg(can_frame->buf[3], 2, format, QLatin1Char('0')).toUpper();
-        newItem = new QStandardItem(string);
-        rx_msg_model->setItem(msgs[msgs_index].line_num, 8, newItem);
+        rx_msg_model->item(msgs[msgs_index].line_num, 8)->setText(string);
 
         string = QString("%1").arg(can_frame->buf[4], 2, format, QLatin1Char('0')).toUpper();
-        newItem = new QStandardItem(string);
-        rx_msg_model->setItem(msgs[msgs_index].line_num, 9, newItem);
+        rx_msg_model->item(msgs[msgs_index].line_num, 9)->setText(string);
 
         string = QString("%1").arg(can_frame->buf[5], 2, format, QLatin1Char('0')).toUpper();
-        newItem = new QStandardItem(string);
-        rx_msg_model->setItem(msgs[msgs_index].line_num, 10, newItem);
+        rx_msg_model->item(msgs[msgs_index].line_num, 10)->setText(string);
 
         string = QString("%1").arg(can_frame->buf[6], 2, format, QLatin1Char('0')).toUpper();
-        newItem = new QStandardItem(string);
-        rx_msg_model->setItem(msgs[msgs_index].line_num, 11, newItem);
+        rx_msg_model->item(msgs[msgs_index].line_num, 11)->setText(string);
 
         string = QString("%1").arg(can_frame->buf[7], 2, format, QLatin1Char('0')).toUpper();
-        newItem = new QStandardItem(string);
-        rx_msg_model->setItem(msgs[msgs_index].line_num, 12, newItem);
+        rx_msg_model->item(msgs[msgs_index].line_num, 12)->setText(string);
 
-        newItem = new QStandardItem(string.number(can_frame->time_stamp / 1000.0, 'g', 6));
-        rx_msg_model->setItem(msgs[msgs_index].line_num, 13, newItem);
+        rx_msg_model->item(msgs[msgs_index].line_num, 13)->setText(string.number(can_frame->time_stamp / 1000.0, 'g', 10));
+
+        rx_msg_model->item(msgs[msgs_index].line_num, 14)->setText(string.number(can_frame->delta_time_stamp / 1000.0, 'g', 10));
         rx_msg_table->setRowHeight(msgs[msgs_index].line_num, 20);
         rx_msg_table->currentIndex();
         update_rx_parse_line(can_frame);
@@ -216,7 +202,7 @@ void Spark::main_window_update()
 
 void Spark::init_rx_msg_table()
 {
-    QString head_name = "Rx Chn Identifer Flag DLC D0 D1 D2 D3 D4 D5 D6 D7 Time-Stamp";
+    QString head_name = "Rx Chn Identifer Flag DLC D0 D1 D2 D3 D4 D5 D6 D7 Time-Stamp Delta-Stamp";
     QStringList list = head_name.simplified().split(" ");
 
     rx_msg_table = new QTableView(this);
@@ -238,8 +224,8 @@ void Spark::init_rx_msg_table()
     rx_msg_table->setColumnWidth(10, 30);   //D5
     rx_msg_table->setColumnWidth(11, 30);   //D6
     rx_msg_table->setColumnWidth(12, 30);   //D7
-    rx_msg_table->setColumnWidth(13, 80);  //Time
-
+    rx_msg_table->setColumnWidth(13, 80);	//Time-Stamp
+    rx_msg_table->setColumnWidth(14, 80);	//Delta-Stamp
     rx_msg_table->show();
 }
 
@@ -249,7 +235,7 @@ void Spark::creat_rx_dock_window()
     QDockWidget *dock = new QDockWidget(tr("Receive Messages"), this);
     dock->setAllowedAreas(Qt::RightDockWidgetArea);
     dock->setMinimumWidth(650);
-    dock->setMinimumHeight(400);
+    dock->setMinimumHeight(200);
     dock->setFloating(TRUE);
     init_rx_msg_table();
     dock->setWidget(rx_msg_table);
@@ -259,7 +245,7 @@ void Spark::creat_rx_dock_window()
 
 void Spark::init_rx_parse_table()
 {
-    QString head_name = "Name Identifer Start-Bit Bit-Length Factor Offset Row Phy Time-Stamp";
+    QString head_name = "Name Identifer Start-Bit Bit-Length Factor Offset Row Phy Time-Stamp Delta-Stamp";
     QStringList list = head_name.simplified().split(" ");
 
     rx_parse_table = new QTableView(this);
@@ -274,19 +260,19 @@ void Spark::init_rx_parse_table()
     rx_parse_table->setColumnWidth(3, 70);    //Bit-Length
     rx_parse_table->setColumnWidth(4, 70);    //Factor
     rx_parse_table->setColumnWidth(5, 60);    //Offset
-    rx_parse_table->setColumnWidth(6, 80);    //Row
+    rx_parse_table->setColumnWidth(6, 40);    //Row
     rx_parse_table->setColumnWidth(7, 80);    //Phy
-    rx_parse_table->setColumnWidth(8, 80);    //time-stamp;
+    rx_parse_table->setColumnWidth(8, 80);    //Time-Stamp;
+    rx_parse_table->setColumnWidth(9, 80);    //Delta-Stamp;
     rx_parse_table->show();
 }
 
 void Spark::creat_rx_parse_window()
 {
-
     QDockWidget *dock = new QDockWidget(tr("Rx Parse Window"), this);
     dock->setAllowedAreas(Qt::RightDockWidgetArea);
     dock->setMinimumWidth(750);
-    dock->setMinimumHeight(400);
+    dock->setMinimumHeight(200);
     dock->setFloating(TRUE);
     init_rx_parse_table();
     dock->setWidget(rx_parse_table);
@@ -317,7 +303,7 @@ void Spark::on_pushButton_8_clicked()
 
     ui->comboBox_2->clear();
     ui->comboBox_2->insertItems(0, QStringList()
-     << QApplication::translate("MainWindow", "1M", 0)
+     << QApplication::translate("Mainww", "1M", 0)
      << QApplication::translate("MainWindow", "500K", 0)
      << QApplication::translate("MainWindow", "250K", 0)
      << QApplication::translate("MainWindow", "125K", 0)
@@ -440,9 +426,17 @@ void Spark::on_lineEdit_21_textEdited(const QString &arg1)
 void Spark::on_pushButton_7_clicked()
 {
     struct mid_data_config_t *element;
+    QStandardItem *newItem;
+
     if(rx_parse_table == NULL)
     {
         creat_rx_parse_window();
+    }
+    for(int index = 0; index < RX_PARSE_ITEMS; index ++)
+    {
+        newItem = new QStandardItem;
+        newItem->setTextAlignment(Qt::AlignCenter);
+        rx_parse_model->setItem(rx_parse->object, index, newItem);
     }
     list_insert(rx_parse->list, rx_parse->object);
     element = (struct mid_data_config_t *)list_find_data(rx_parse->list, rx_parse->object);

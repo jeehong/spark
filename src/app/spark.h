@@ -12,6 +12,8 @@
 #include "src/mid/mid_list.h"
 
 #define RX_LISTS_MAX        (500)
+#define RX_WINDOW_ITEMS     (15)
+#define RX_PARSE_ITEMS      (10)
 
 namespace Ui {
 class Spark;
@@ -77,8 +79,8 @@ private:
         U32 mutex_val;
         U32 line_num;
     } msgs[RX_LISTS_MAX];
-    U32 rx_accept_id;
-    U32 rx_reject_id;
+    int rx_accept_id;
+    int rx_reject_id;
     bool rx_dec_display;
     bool fixed_posions;
     struct data_parse_t *tx_parse;
