@@ -2,14 +2,13 @@
 #include "src/driver/canlib.h"
 #include "mid_can.h"
 #include "mid_bits.h"
-#include "src/app/spark.h"
 #include "mid_list.h"
 
 #ifdef __cplusplus
 extern "C" {
 #endif
 
-struct kvaser_running_t
+struct mid_can_running_t
 {
     int handle;
     int channels;
@@ -24,7 +23,7 @@ struct kvaser_running_t
 	canBusStatistics status;
 };
 
-static struct kvaser_running_t kvaser;
+static struct mid_can_running_t kvaser;
 
 void mid_can_refresh_device(void)
 {
@@ -181,24 +180,24 @@ const canBusStatistics *mid_can_process(void)
 
 const struct can_bus_frame_t *mid_can_new_frame(void)
 {
-    struct can_bus_frame_t *new_frame = NULL;
-    struct list_element_t *new_element;
+    struct can_bus_frame_t *temp_frame = NULL;
+    struct list_element_t *temp_element;
 
     if(kvaser.rx_list->head == NULL)
         return NULL;
-    new_element = kvaser.rx_list->head;
+    temp_element = kvaser.rx_list->head;
     do
     {
-        if(((struct can_bus_frame_t*)new_element->data)->new_data == TRUE)
+        if(((struct can_bus_frame_t*)temp_element->data)->new_data == TRUE)
         {
-            new_frame = (struct can_bus_frame_t*)(new_element->data);
-            new_frame->new_data = FALSE;
+            temp_frame = (struct can_bus_frame_t*)(temp_element->data);
+            temp_frame->new_data = FALSE;
             break;
         }
-        new_element = new_element->next;
-    }while(new_element != NULL/* && new_element->next != NULL*/);
+        temp_element = temp_element->next;
+    }while(temp_element != NULL);
 
-    return new_frame;
+    return temp_frame;
 }
 
 int mid_can_write(unsigned char *dest,

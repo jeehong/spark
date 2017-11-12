@@ -101,7 +101,7 @@ void list_insert(struct list_item_t *list, long flag)
 			temp = temp->next;
         }
         if(temp == list->head
-                && new_element->insert_flag < temp->insert_flag)
+            && new_element->insert_flag < temp->insert_flag)
         {
             new_element->next = list->head;
             list->head = new_element;

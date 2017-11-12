@@ -42,7 +42,7 @@ public:
     void button_refresh_press();
     void creat_rx_dock_window();
     void creat_rx_parse_window();
-    void init_rx_msg_table();
+    void init_rx_window_table();
     void init_rx_parse_table();
 private slots:
     void main_window_update();
@@ -74,27 +74,28 @@ private slots:
 private:
     void update_receive_message_window();
     void update_rx_parse_line(const struct can_bus_frame_t *frame);
+
+    // rx parse
+    QTableView *rx_parse_table;
+    QStandardItemModel *rx_parse_model;
     struct data_parse_t *rx_parse;
-    struct {
-        U32 mutex_val;
-        U32 line_num;
-    } msgs[RX_LISTS_MAX];
+
+    // rx control
+    QTableView *rx_window_table;
+    QStandardItemModel *rx_window_model;
+    bool rx_window_refresh;
     int rx_accept_id;
     int rx_reject_id;
     bool rx_dec_display;
     bool fixed_posions;
+    struct {
+        U32 mutex_val;
+        U32 line_num;
+    } msgs[RX_LISTS_MAX];
+
+    // tx control
     struct data_parse_t *tx_parse;
-    U32 tx_element_id;
-    U8 tx_element_start_bit;
-    U8 tx_element_bits_length;
-    float tx_element_factor;
-    float tx_element_offset;
-    QTableView *rx_msg_table;
-    QStandardItemModel *rx_msg_model;
-    QTableView *rx_parse_table;
-    QStandardItemModel *rx_parse_model;
-    unsigned int msg_lines;
-    bool refresh_rx_window;
+
     Ui::Spark *ui;
     QTimer uiTimer;
 };
