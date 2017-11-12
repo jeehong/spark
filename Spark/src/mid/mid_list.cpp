@@ -70,12 +70,12 @@ void list_insert(struct list_item_t *list, long flag)
     struct list_element_t *new_element, *temp;
 
 	if(list == NULL)
-		return;
+        return;
 	if(list->head != NULL && find_element(list, flag) != NULL)
-		return;
+        return;
 	new_element = (struct list_element_t *)malloc(sizeof(struct list_element_t));
 	if(new_element == NULL)
-		return;
+        return;
 	new_element->data = malloc(list->element_size);
 	if(new_element->data == NULL)
 	{
@@ -92,15 +92,24 @@ void list_insert(struct list_item_t *list, long flag)
 	else
 	{
 		temp = list->head;
-		while(temp->next != NULL 
-			&& new_element->insert_flag <= temp->insert_flag)
+        while(temp->next != NULL)
 		{
-			if(new_element->insert_flag > temp->next->insert_flag)
+            if(new_element->insert_flag < temp->insert_flag)
+            {
 				break;
+            }
 			temp = temp->next;
 		}
-		new_element->next = temp->next;
-		temp->next = new_element;
+        if(temp == list->head)
+        {
+            new_element->next = list->head;
+            list->head = new_element;
+        }
+        else
+        {
+            new_element->next = temp->next;
+            temp->next = new_element;
+        }
     }
 }
 
@@ -116,6 +125,7 @@ void list_remove(struct list_item_t *list, long flag)
 	{
 		rm_obj = temp->next;
 		temp->next = temp->next->next;
+		free(rm_obj->data);
 		free(rm_obj);
 	}
 }

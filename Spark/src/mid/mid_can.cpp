@@ -135,7 +135,11 @@ static void filling_data(void)
 
 	while(1)
 	{
-		stat = canRead(kvaser.handle, &src.id, &src.buf[0], &src.dlc, &src.flag, &src.time_stamp);
+        stat = canRead(kvaser.handle,
+                        &src.id, &src.buf[0],
+                        &src.dlc,
+                        &src.flag,
+                        &src.time_stamp);
 		if (stat < 0)
 		{
 			break;
@@ -187,7 +191,7 @@ const struct can_bus_frame_t *mid_can_new_frame(void)
             break;
         }
         new_element = new_element->next;
-    }while(new_element != NULL && new_element->next != NULL);
+    }while(new_element != NULL/* && new_element->next != NULL*/);
 
     return new_frame;
 }

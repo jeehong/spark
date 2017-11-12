@@ -24,7 +24,8 @@ struct can_bus_frame_t
     unsigned int dlc;
     unsigned int flag;
     bool new_data;
-    char buf[MAX_DLC];
+    unsigned int squ;
+    unsigned char buf[MAX_DLC];
     unsigned long time_stamp;
 };
 
