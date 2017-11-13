@@ -13,6 +13,7 @@
 
 #define RX_LISTS_MAX        (500)
 #define RX_WINDOW_ITEMS     (15)
+#define TX_WINDOW_ITEMS     (15)
 #define RX_PARSE_ITEMS      (10)
 
 namespace Ui {
@@ -28,7 +29,7 @@ struct data_parse_t
     U8 bits_length;
     float factor;
     float offset;
-
+    float value;
     struct list_item_t *list;
 };
 
@@ -71,10 +72,50 @@ private slots:
 
     void on_pushButton_10_clicked();
 
+    void on_lineEdit_textEdited(const QString &arg1);
+
+    void on_lineEdit_2_textEdited(const QString &arg1);
+
+    void on_lineEdit_3_textEdited(const QString &arg1);
+
+    void on_lineEdit_4_textEdited(const QString &arg1);
+
+    void on_lineEdit_5_textEdited(const QString &arg1);
+
+    void on_lineEdit_7_textEdited(const QString &arg1);
+
+    void on_lineEdit_6_textEdited(const QString &arg1);
+
+    void on_lineEdit_10_textEdited(const QString &arg1);
+
+    void on_lineEdit_8_textEdited(const QString &arg1);
+
+    void on_lineEdit_11_textEdited(const QString &arg1);
+
+    void on_lineEdit_9_textEdited(const QString &arg1);
+
+    void on_pushButton_3_clicked();
+
+    void on_lineEdit_14_textEdited(const QString &arg1);
+
+    void on_lineEdit_15_textEdited(const QString &arg1);
+
+    void on_lineEdit_16_textEdited(const QString &arg1);
+
+    void on_lineEdit_17_textEdited(const QString &arg1);
+
+    void on_lineEdit_18_textEdited(const QString &arg1);
+
+    void on_pushButton_6_clicked();
+
+    void on_lineEdit_24_textEdited(const QString &arg1);
+
 private:
+    void creat_tx_window();
+    void init_tx_table();
     void update_receive_message_window();
     void update_rx_parse_line(const struct can_bus_frame_t *frame);
-
+    struct data_parse_t *init_data_parse();
     // rx parse
     QTableView *rx_parse_table;
     QStandardItemModel *rx_parse_model;
@@ -95,6 +136,11 @@ private:
 
     // tx control
     struct data_parse_t *tx_parse;
+    struct can_bus_frame_t tx_msg_config;
+    QTableView *tx_window_table;
+    QStandardItemModel *tx_window_model;
+    U32 tx_msgs_lines;
+    struct list_item_t *can_tx_list;
 
     Ui::Spark *ui;
     QTimer uiTimer;

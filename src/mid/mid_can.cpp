@@ -127,6 +127,11 @@ void mid_can_init(int device_type)
 	mid_can_refresh_device();
 }
 
+struct list_item_t *mid_can_tx_list(void)
+{
+    return kvaser.tx_list;
+}
+
 static void filling_data(void)
 {
     canStatus stat;
@@ -148,23 +153,50 @@ static void filling_data(void)
 		}
 		else
 		{
-                    list_insert(kvaser.rx_list, src.id);
-                    dest = (struct can_bus_frame_t *)list_find_data(kvaser.rx_list, src.id);
-                    src.chn = kvaser.cur_chn;
-                    src.new_data = TRUE;
-                    if(src.time_stamp > dest->time_stamp)
-                        src.delta_time_stamp = src.time_stamp - dest->time_stamp;
-                    else
-                        src.delta_time_stamp = dest->time_stamp - src.time_stamp;
-                    memcpy(dest, &src, sizeof(*dest));
+            list_insert(kvaser.rx_list, src.id);
+            dest = (struct can_bus_frame_t *)list_find_data(kvaser.rx_list, src.id);
+            src.chn = kvaser.cur_chn;
+            src.new_data = TRUE;
+            if(src.time_stamp > dest->time_stamp)
+                src.delta_time_stamp = src.time_stamp - dest->time_stamp;
+            else
+                src.delta_time_stamp = dest->time_stamp - src.time_stamp;
+            memcpy(dest, &src, sizeof(*dest));
 
 		}
 	}
 }
 
+static void tx_process(void)
+{
+    struct can_bus_frame_t *temp_frame = NULL;
+    struct list_element_t *temp_element;
+    unsigned long time_now;
+
+
+    if(kvaser.tx_list->head == NULL)
+    {
+        return;
+    }
+    temp_element = kvaser.tx_list->head;
+    time_now = canReadTimer(kvaser.handle);
+    do
+    {
+        temp_frame = (struct can_bus_frame_t*)(temp_element->data);
+        if(abs(time_now - temp_frame->time_stamp)
+                >= temp_frame->delta_time_stamp * 2.5)
+        {
+            canWrite(kvaser.handle, temp_frame->id, temp_frame->buf, temp_frame->dlc, temp_frame->flag);
+            temp_frame->time_stamp = time_now;
+        }
+        temp_element = temp_element->next;
+    }while(temp_element != NULL);
+}
+
 const canBusStatistics *mid_can_process(void)
 {
 	canStatus stat;
+    tx_process();
 	stat = canRequestBusStatistics(kvaser.handle);
     if(stat < 0)
     {
@@ -200,6 +232,7 @@ const struct can_bus_frame_t *mid_can_new_frame(void)
     return temp_frame;
 }
 
+#if 0
 int mid_can_write(unsigned char *dest,
                   unsigned char start_bit,
                   unsigned char data_length,
@@ -215,6 +248,7 @@ int mid_can_read(unsigned char *dest,
 {
 	
 }
+#endif
 
 #ifdef __cplusplus
 }

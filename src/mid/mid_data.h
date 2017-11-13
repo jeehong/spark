@@ -10,7 +10,7 @@ extern "C" {
 struct mid_data_config_t
 {
     U32 flag;
-	U32 id;
+    long id;
 	U8 start_bit;
     U8 bits_length;
 	U32 row;

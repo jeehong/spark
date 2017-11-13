@@ -8,6 +8,7 @@
 #include "spark.h"
 #include "ui_spark.h"
 #include "src/mid/mid_can.h"
+#include "src/mid/mid_bits.h"
 #include "src/mid/mid_list.h"
 #include "src/mid/mid_data.h"
 #include "src/mid/comm_typedef.h"
@@ -23,15 +24,13 @@ Spark::Spark(QMainWindow *parent) :
     rx_window_refresh = FALSE;
 
     // rx_parse init
-    rx_parse = new struct data_parse_t;
-    rx_parse->list = list_init(sizeof(struct mid_data_config_t));
-    rx_parse->msg_lines = 0;
-    rx_parse->id = 0;
-    rx_parse->object = 0;
-    rx_parse->start_bit = 0;
-    rx_parse->bits_length = 0;
-    rx_parse->factor = 0;
-    rx_parse->offset = 0;
+    rx_parse = init_data_parse();
+    // tx_parse init
+    tx_parse = init_data_parse();
+    memset(&tx_msg_config, 0, sizeof(tx_msg_config));
+    tx_window_table = NULL;
+    tx_window_model = NULL;
+    tx_msgs_lines = 0;
 
     fixed_posions = FALSE;
     rx_accept_id = 0;
@@ -39,6 +38,7 @@ Spark::Spark(QMainWindow *parent) :
     on_pushButton_10_clicked();
     rx_dec_display = FALSE;
     mid_can_init(CAN_DEVICE_KVASER);
+    can_tx_list = mid_can_tx_list();
     uiTimer.setInterval(5);
     connect(&uiTimer, SIGNAL(timeout()), this, SLOT(main_window_update()));
 }
@@ -46,6 +46,22 @@ Spark::Spark(QMainWindow *parent) :
 Spark::~Spark()
 {
     delete ui;
+}
+
+struct data_parse_t * Spark::init_data_parse()
+{
+    struct data_parse_t *obj;
+    obj = new struct data_parse_t;
+    obj->list = list_init(sizeof(struct mid_data_config_t));
+    obj->msg_lines = 0;
+    obj->id = 0;
+    obj->object = 0;
+    obj->start_bit = 0;
+    obj->bits_length = 0;
+    obj->factor = 0;
+    obj->offset = 0;
+
+    return obj;
 }
 
 void Spark::update_rx_parse_line(const struct can_bus_frame_t *frame)
@@ -101,6 +117,7 @@ void Spark::update_receive_message_window()
     U16 msgs_index = 0;
     QStandardItem *newItem;
     const struct can_bus_frame_t *can_frame;
+    struct can_bus_frame_t *temp_element;
     QString string;
     U32 format = rx_dec_display == TRUE ? 10 : 16;
 
@@ -184,6 +201,56 @@ void Spark::update_receive_message_window()
         rx_window_table->setRowHeight(msgs[msgs_index].line_num, 20);
         rx_window_table->currentIndex();
         update_rx_parse_line(can_frame);
+    }
+    msgs_index = 0;
+    for(struct list_element_t *list = can_tx_list->head; list != NULL; list = list->next)
+    {
+        temp_element = (struct can_bus_frame_t *)list->data;
+
+        {
+            string = QString("%1").arg(msgs_index, 10, 10, QLatin1Char('0'));
+            tx_window_model->item(msgs_index, 0)->setText(string);
+
+            tx_window_model->item(msgs_index, 1)->setText(string.number(temp_element->chn, 10));
+
+            string = QString("%1").arg(temp_element->id, 8, 16, QLatin1Char('0')).toUpper();
+            tx_window_model->item(msgs_index, 2)->setText(string);
+
+            tx_window_model->item(msgs_index, 3)->setText(string.number(temp_element->flag, 10));
+
+            tx_window_model->item(msgs_index, 4)->setText(string.number(temp_element->dlc, 10));
+
+            string = QString("%1").arg(temp_element->buf[0], 2, format, QLatin1Char('0')).toUpper();
+            tx_window_model->item(msgs_index, 5)->setText(string);
+
+            string = QString("%1").arg(temp_element->buf[1], 2, format, QLatin1Char('0')).toUpper();
+            tx_window_model->item(msgs_index, 6)->setText(string);
+
+            string = QString("%1").arg(temp_element->buf[2], 2, format, QLatin1Char('0')).toUpper();
+            tx_window_model->item(msgs_index, 7)->setText(string);
+
+            string = QString("%1").arg(temp_element->buf[3], 2, format, QLatin1Char('0')).toUpper();
+            tx_window_model->item(msgs_index, 8)->setText(string);
+
+            string = QString("%1").arg(temp_element->buf[4], 2, format, QLatin1Char('0')).toUpper();
+            tx_window_model->item(msgs_index, 9)->setText(string);
+
+            string = QString("%1").arg(temp_element->buf[5], 2, format, QLatin1Char('0')).toUpper();
+            tx_window_model->item(msgs_index, 10)->setText(string);
+
+            string = QString("%1").arg(temp_element->buf[6], 2, format, QLatin1Char('0')).toUpper();
+            tx_window_model->item(msgs_index, 11)->setText(string);
+
+            string = QString("%1").arg(temp_element->buf[7], 2, format, QLatin1Char('0')).toUpper();
+            tx_window_model->item(msgs_index, 12)->setText(string);
+
+            tx_window_model->item(msgs_index, 13)->setText(string.number(temp_element->time_stamp / 1000.0, 'g', 10));
+
+            tx_window_model->item(msgs_index, 14)->setText(string.number(temp_element->delta_time_stamp / 1000.0, 'g', 10));
+            tx_window_table->setRowHeight(msgs_index, 20);
+            tx_window_table->currentIndex();
+            msgs_index ++;
+        }
     }
 }
 
@@ -505,3 +572,232 @@ void Spark::on_pushButton_10_clicked()
 
     memset(msgs, U32_INVALID_VALUE, sizeof(msgs[0]) * RX_LISTS_MAX);
 }
+
+// tx id
+void Spark::on_lineEdit_textEdited(const QString &arg1)
+{
+    bool ok;
+
+    tx_msg_config.id = arg1.toInt(&ok, 16);
+}
+
+// tx dlc
+void Spark::on_lineEdit_2_textEdited(const QString &arg1)
+{
+    bool ok;
+
+    tx_msg_config.dlc = arg1.toInt(&ok, 10);
+}
+
+// tx interval
+void Spark::on_lineEdit_3_textEdited(const QString &arg1)
+{
+    bool ok;
+
+    tx_msg_config.delta_time_stamp = arg1.toInt(&ok, 10);
+}
+
+// tx Byte0
+void Spark::on_lineEdit_4_textEdited(const QString &arg1)
+{
+    bool ok;
+
+    tx_msg_config.buf[0] = arg1.toInt(&ok, 16);
+}
+
+// tx Byte1
+void Spark::on_lineEdit_5_textEdited(const QString &arg1)
+{
+    bool ok;
+
+    tx_msg_config.buf[1] = arg1.toInt(&ok, 16);
+}
+
+// tx Byte2
+void Spark::on_lineEdit_7_textEdited(const QString &arg1)
+{
+    bool ok;
+
+    tx_msg_config.buf[2] = arg1.toInt(&ok, 16);
+}
+
+// tx Byte3
+void Spark::on_lineEdit_6_textEdited(const QString &arg1)
+{
+    bool ok;
+
+    tx_msg_config.buf[3] = arg1.toInt(&ok, 16);
+}
+
+// tx Byte4
+void Spark::on_lineEdit_10_textEdited(const QString &arg1)
+{
+    bool ok;
+
+    tx_msg_config.buf[4] = arg1.toInt(&ok, 16);
+}
+
+// tx Byte5
+void Spark::on_lineEdit_8_textEdited(const QString &arg1)
+{
+    bool ok;
+
+    tx_msg_config.buf[5] = arg1.toInt(&ok, 16);
+}
+
+// tx Byte6
+void Spark::on_lineEdit_11_textEdited(const QString &arg1)
+{
+    bool ok;
+
+    tx_msg_config.buf[6] = arg1.toInt(&ok, 16);
+}
+
+// tx Byte7
+void Spark::on_lineEdit_9_textEdited(const QString &arg1)
+{
+    bool ok;
+
+    tx_msg_config.buf[7] = arg1.toInt(&ok, 16);
+}
+
+void Spark::init_tx_table()
+{
+    QString head_name = "Tx Chn Identifer Flag DLC D0 D1 D2 D3 D4 D5 D6 D7 Time-Stamp Delta-Stamp";
+    QStringList list = head_name.simplified().split(" ");
+
+    tx_window_table = new QTableView(this);
+    tx_window_table->verticalHeader()->hide();
+    tx_window_model = new QStandardItemModel();
+    tx_window_model->setHorizontalHeaderLabels(list);
+    tx_window_table->setModel(tx_window_model);
+    tx_window_table->setRowHeight(0, 20);
+    tx_window_table->setColumnWidth(0, 70);    //Tx
+    tx_window_table->setColumnWidth(1, 30);    //Chn
+    tx_window_table->setColumnWidth(2, 70);    //Identifer
+    tx_window_table->setColumnWidth(3, 30);    //Flag
+    tx_window_table->setColumnWidth(4, 30);    //DLC
+    tx_window_table->setColumnWidth(5, 30);    //D0
+    tx_window_table->setColumnWidth(6, 30);    //D1
+    tx_window_table->setColumnWidth(7, 30);    //D2
+    tx_window_table->setColumnWidth(8, 30);    //D3
+    tx_window_table->setColumnWidth(9, 30);    //D4
+    tx_window_table->setColumnWidth(10, 30);   //D5
+    tx_window_table->setColumnWidth(11, 30);   //D6
+    tx_window_table->setColumnWidth(12, 30);   //D7
+    tx_window_table->setColumnWidth(13, 80);	//Time-Stamp
+    tx_window_table->setColumnWidth(14, 80);	//Delta-Stamp
+    tx_window_table->show();
+}
+
+void Spark::creat_tx_window()
+{
+    QDockWidget *dock = new QDockWidget(tr("Tx Window"), this);
+    dock->setAllowedAreas(Qt::RightDockWidgetArea);
+    dock->setMinimumWidth(750);
+    dock->setMinimumHeight(200);
+    dock->setFloating(TRUE);
+    init_tx_table();
+    dock->setWidget(tx_window_table);
+
+    addDockWidget(Qt::RightDockWidgetArea, dock);
+}
+
+// tx start window
+void Spark::on_pushButton_3_clicked()
+{
+    struct can_bus_frame_t *temp_element;
+    QStandardItem *newItem;
+
+    if(can_tx_list == 0)
+    {
+        return;
+    }
+    if(tx_window_table == NULL)
+    {
+        creat_tx_window();
+    }
+
+    if(list_find_data(can_tx_list, tx_msg_config.id) != NULL)
+    {
+        return;
+    }
+    list_insert(can_tx_list, tx_msg_config.id);
+    temp_element = (struct can_bus_frame_t *)list_find_data(can_tx_list, tx_msg_config.id);
+
+    if(temp_element == NULL)
+    {
+        return;
+    }
+    tx_msg_config.new_data = 0;
+    tx_msg_config.time_stamp = 0;
+    tx_msg_config.squ = 0;
+    memcpy(temp_element, &tx_msg_config, sizeof(*temp_element));
+
+    for(int index = 0; index < TX_WINDOW_ITEMS; index ++)
+    {
+        newItem = new QStandardItem;
+        newItem->setTextAlignment(Qt::AlignCenter);
+        tx_window_model->setItem(tx_msgs_lines, index, newItem);
+    }
+    tx_msgs_lines ++;
+}
+
+// tx parse id
+void Spark::on_lineEdit_14_textEdited(const QString &arg1)
+{
+    bool ok;
+
+    tx_parse->id = arg1.toInt(&ok, 16);
+}
+
+// tx parse start-bit
+void Spark::on_lineEdit_15_textEdited(const QString &arg1)
+{
+    bool ok;
+
+    tx_parse->start_bit = arg1.toInt(&ok, 10);
+}
+
+// tx parse bits-length
+void Spark::on_lineEdit_16_textEdited(const QString &arg1)
+{
+    bool ok;
+
+    tx_parse->bits_length = arg1.toInt(&ok, 10);
+}
+
+// tx parse factor
+void Spark::on_lineEdit_17_textEdited(const QString &arg1)
+{
+    tx_parse->factor = arg1.toFloat();
+}
+
+// tx parse offset
+void Spark::on_lineEdit_18_textEdited(const QString &arg1)
+{
+    tx_parse->offset = arg1.toFloat();
+}
+
+// tx parse value
+void Spark::on_lineEdit_24_textEdited(const QString &arg1)
+{
+    tx_parse->value = arg1.toFloat();
+}
+
+// tx parse start
+void Spark::on_pushButton_6_clicked()
+{
+    struct can_bus_frame_t *temp_element;
+    float temp_float;
+
+    temp_element = (struct can_bus_frame_t *)list_find_data(can_tx_list, tx_parse->id);
+    if(temp_element == NULL)
+    {
+        return;
+    }
+    temp_float = (tx_parse->value - tx_parse->offset) / tx_parse->factor;
+    bits_pack(temp_float + 0.5, temp_element->buf, temp_element->dlc, tx_parse->start_bit, tx_parse->bits_length);
+}
+
+
