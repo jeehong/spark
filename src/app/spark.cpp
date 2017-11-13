@@ -709,6 +709,10 @@ void Spark::on_pushButton_3_clicked()
     struct can_bus_frame_t *temp_element;
     QStandardItem *newItem;
 
+    if(tx_msg_config.delta_time_stamp == 0 || tx_msg_config.id == 0)
+    {
+        return;
+    }
     if(can_tx_list == 0)
     {
         return;
@@ -717,7 +721,6 @@ void Spark::on_pushButton_3_clicked()
     {
         creat_tx_window();
     }
-
     if(list_find_data(can_tx_list, tx_msg_config.id) != NULL)
     {
         return;
