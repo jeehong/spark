@@ -592,7 +592,7 @@ void Spark::on_lineEdit_3_textEdited(const QString &arg1)
 {
     bool ok;
 
-    tx_msg_config.delta_time_stamp = arg1.toInt(&ok, 10);
+    tx_msg_config.config_delta_time_stamp = arg1.toInt(&ok, 10);
 }
 
 // tx Byte0
@@ -692,7 +692,7 @@ void Spark::creat_tx_window()
 {
     QDockWidget *dock = new QDockWidget(tr("Tx Window"), this);
     dock->setAllowedAreas(Qt::RightDockWidgetArea);
-    dock->setMinimumWidth(750);
+    dock->setMinimumWidth(700);
     dock->setMinimumHeight(200);
     dock->setFloating(TRUE);
     init_tx_table();
@@ -707,7 +707,7 @@ void Spark::on_pushButton_3_clicked()
     struct can_bus_frame_t *temp_element;
     QStandardItem *newItem;
 
-    if(tx_msg_config.delta_time_stamp == 0 || tx_msg_config.id == 0)
+    if(tx_msg_config.config_delta_time_stamp == 0 || tx_msg_config.id == 0)
     {
         return;
     }
@@ -730,7 +730,16 @@ void Spark::on_pushButton_3_clicked()
     {
         return;
     }
+    if(tx_msg_config.id > 0x7FF)
+    {
+        tx_msg_config.flag = canMSG_EXT;
+    }
+    else
+    {
+        tx_msg_config.flag = canMSG_STD;
+    }
     tx_msg_config.new_data = 0;
+
     tx_msg_config.time_stamp = 0;
     tx_msg_config.squ = 0;
     memcpy(temp_element, &tx_msg_config, sizeof(*temp_element));

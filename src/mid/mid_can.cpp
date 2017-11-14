@@ -184,8 +184,9 @@ static void tx_process(void)
     {
         temp_frame = (struct can_bus_frame_t*)(temp_element->data);
         if(abs(time_now - temp_frame->time_stamp)
-                >= temp_frame->delta_time_stamp * 2.5)
+                >= temp_frame->config_delta_time_stamp * 2.5)
         {
+            temp_frame->delta_time_stamp = abs(time_now - temp_frame->time_stamp);
             canWrite(kvaser.handle, temp_frame->id, temp_frame->buf, temp_frame->dlc, temp_frame->flag);
             temp_frame->time_stamp = time_now;
         }

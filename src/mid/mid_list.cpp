@@ -67,7 +67,7 @@ static struct list_element_t *find_element(struct list_item_t *list, long flag)
 
 void list_insert(struct list_item_t *list, long flag)
 {
-    struct list_element_t *new_element, *temp;
+    struct list_element_t *new_element, *temp, *pre;
 
 	if(list == NULL)
         return;
@@ -92,24 +92,30 @@ void list_insert(struct list_item_t *list, long flag)
 	else
 	{
         temp = list->head;
+        pre = temp;
         while(temp->next != NULL)
 		{
             if(new_element->insert_flag < temp->insert_flag)
             {
 				break;
             }
+            pre = temp;
 			temp = temp->next;
+        }
+        if(temp->next == NULL)
+        {
+            pre = temp;
         }
         if(temp == list->head
             && new_element->insert_flag < temp->insert_flag)
         {
-            new_element->next = list->head;
+            new_element->next = temp;
             list->head = new_element;
         }
         else
         {
-            new_element->next = temp->next;
-            temp->next = new_element;
+            new_element->next = pre->next;
+            pre->next = new_element;
         }
     }
 }
