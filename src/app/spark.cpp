@@ -106,9 +106,7 @@ void Spark::update_rx_parse_line(const struct can_bus_frame_t *frame)
             rx_parse_table->setRowHeight(temp_element->flag, 20);
         }
         else
-        {
-
-        }
+        {}
     }
 }
 
@@ -277,7 +275,7 @@ void Spark::init_rx_window_table()
     rx_window_model->setHorizontalHeaderLabels(list);
     rx_window_table->setModel(rx_window_model);
     rx_window_table->setRowHeight(0, 20);
-    rx_window_table->setColumnWidth(0, 70);    //Rx
+    rx_window_table->setColumnWidth(0, 90);    //Rx
     rx_window_table->setColumnWidth(1, 30);    //Chn
     rx_window_table->setColumnWidth(2, 70);    //Identifer
     rx_window_table->setColumnWidth(3, 30);    //Flag
@@ -300,7 +298,7 @@ void Spark::creat_rx_dock_window()
 
     QDockWidget *dock = new QDockWidget(tr("Receive Messages"), this);
     dock->setAllowedAreas(Qt::RightDockWidgetArea);
-    dock->setMinimumWidth(650);
+    dock->setMinimumWidth(700);
     dock->setMinimumHeight(200);
     dock->setFloating(TRUE);
     init_rx_window_table();
@@ -320,13 +318,13 @@ void Spark::init_rx_parse_table()
     rx_parse_model->setHorizontalHeaderLabels(list);
     rx_parse_table->setModel(rx_parse_model);
     rx_parse_table->setRowHeight(0, 20);
-    rx_parse_table->setColumnWidth(0, 70);    //Name
-    rx_parse_table->setColumnWidth(1, 80);    //Identifer
+    rx_parse_table->setColumnWidth(0, 90);    //Name
+    rx_parse_table->setColumnWidth(1, 70);    //Identifer
     rx_parse_table->setColumnWidth(2, 60);    //Start-Bit
     rx_parse_table->setColumnWidth(3, 70);    //Bit-Length
-    rx_parse_table->setColumnWidth(4, 70);    //Factor
-    rx_parse_table->setColumnWidth(5, 60);    //Offset
-    rx_parse_table->setColumnWidth(6, 40);    //Row
+    rx_parse_table->setColumnWidth(4, 50);    //Factor
+    rx_parse_table->setColumnWidth(5, 50);    //Offset
+    rx_parse_table->setColumnWidth(6, 50);    //Row
     rx_parse_table->setColumnWidth(7, 80);    //Phy
     rx_parse_table->setColumnWidth(8, 80);    //Time-Stamp;
     rx_parse_table->setColumnWidth(9, 80);    //Delta-Stamp;
@@ -337,7 +335,7 @@ void Spark::creat_rx_parse_window()
 {
     QDockWidget *dock = new QDockWidget(tr("Rx Parse Window"), this);
     dock->setAllowedAreas(Qt::RightDockWidgetArea);
-    dock->setMinimumWidth(750);
+    dock->setMinimumWidth(700);
     dock->setMinimumHeight(200);
     dock->setFloating(TRUE);
     init_rx_parse_table();
@@ -672,7 +670,7 @@ void Spark::init_tx_table()
     tx_window_model->setHorizontalHeaderLabels(list);
     tx_window_table->setModel(tx_window_model);
     tx_window_table->setRowHeight(0, 20);
-    tx_window_table->setColumnWidth(0, 70);    //Tx
+    tx_window_table->setColumnWidth(0, 90);    //Tx
     tx_window_table->setColumnWidth(1, 30);    //Chn
     tx_window_table->setColumnWidth(2, 70);    //Identifer
     tx_window_table->setColumnWidth(3, 30);    //Flag
