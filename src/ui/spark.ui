@@ -381,9 +381,9 @@
     <property name="geometry">
      <rect>
       <x>380</x>
-      <y>20</y>
+      <y>80</y>
       <width>51</width>
-      <height>141</height>
+      <height>81</height>
      </rect>
     </property>
     <property name="text">
@@ -531,6 +531,32 @@
      <string>Clear</string>
     </property>
    </widget>
+   <widget class="QCheckBox" name="checkBox_8">
+    <property name="geometry">
+     <rect>
+      <x>380</x>
+      <y>23</y>
+      <width>53</width>
+      <height>16</height>
+     </rect>
+    </property>
+    <property name="text">
+     <string>Motor</string>
+    </property>
+   </widget>
+   <widget class="QCheckBox" name="checkBox_7">
+    <property name="geometry">
+     <rect>
+      <x>380</x>
+      <y>53</y>
+      <width>41</width>
+      <height>16</height>
+     </rect>
+    </property>
+    <property name="text">
+     <string>MSB</string>
+    </property>
+   </widget>
   </widget>
   <widget class="QGroupBox" name="groupBox_4">
    <property name="geometry">
@@ -603,14 +629,14 @@
    <widget class="QLabel" name="label_9">
     <property name="geometry">
      <rect>
-      <x>10</x>
-      <y>90</y>
+      <x>-70</x>
+      <y>110</y>
       <width>61</width>
       <height>16</height>
      </rect>
     </property>
     <property name="text">
-     <string>Interval:</string>
+     <string>Period:</string>
     </property>
    </widget>
    <widget class="QLabel" name="label_10">
@@ -827,9 +853,9 @@
     <property name="geometry">
      <rect>
       <x>380</x>
-      <y>80</y>
+      <y>137</y>
       <width>51</width>
-      <height>81</height>
+      <height>24</height>
      </rect>
     </property>
     <property name="text">
@@ -968,7 +994,7 @@
     <property name="geometry">
      <rect>
       <x>380</x>
-      <y>20</y>
+      <y>80</y>
       <width>61</width>
       <height>16</height>
      </rect>
@@ -981,10 +1007,36 @@
     <property name="geometry">
      <rect>
       <x>380</x>
-      <y>50</y>
+      <y>110</y>
       <width>51</width>
       <height>20</height>
      </rect>
+    </property>
+   </widget>
+   <widget class="QCheckBox" name="checkBox_5">
+    <property name="geometry">
+     <rect>
+      <x>380</x>
+      <y>23</y>
+      <width>71</width>
+      <height>16</height>
+     </rect>
+    </property>
+    <property name="text">
+     <string>Motor</string>
+    </property>
+   </widget>
+   <widget class="QCheckBox" name="checkBox_6">
+    <property name="geometry">
+     <rect>
+      <x>380</x>
+      <y>52</y>
+      <width>71</width>
+      <height>16</height>
+     </rect>
+    </property>
+    <property name="text">
+     <string>MSB</string>
     </property>
    </widget>
   </widget>
@@ -1011,6 +1063,8 @@
   <tabstop>lineEdit_20</tabstop>
   <tabstop>lineEdit_19</tabstop>
   <tabstop>lineEdit_21</tabstop>
+  <tabstop>checkBox_8</tabstop>
+  <tabstop>checkBox_7</tabstop>
   <tabstop>pushButton_7</tabstop>
   <tabstop>lineEdit</tabstop>
   <tabstop>lineEdit_2</tabstop>
@@ -1029,6 +1083,8 @@
   <tabstop>lineEdit_16</tabstop>
   <tabstop>lineEdit_17</tabstop>
   <tabstop>lineEdit_18</tabstop>
+  <tabstop>checkBox_5</tabstop>
+  <tabstop>checkBox_6</tabstop>
   <tabstop>lineEdit_24</tabstop>
   <tabstop>pushButton_6</tabstop>
  </tabstops>

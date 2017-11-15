@@ -5,13 +5,22 @@
 extern "C" {
 #endif
 
-void mid_data_can_calc(struct mid_data_config_t *dest, U8 *src, U32 src_length)
+void mid_data_can_calc(struct mid_data_config_t *dest, 
+								U8 *src, 
+								bool bytes_order, 
+								bool bits_order, 
+								U32 src_length)
 {
     if(dest == NULL)
     {
         return;
     }
-    if(bits_parse(&dest->row, src, src_length, dest->start_bit, dest->bits_length) < 0)
+    if(data_pick(&dest->row,
+					src,
+					bytes_order,
+					bits_order,
+					dest->start_bit,
+					dest->bits_length) < 0)
     {
         dest->row = 0;
         dest->phy = 0;
@@ -19,7 +28,6 @@ void mid_data_can_calc(struct mid_data_config_t *dest, U8 *src, U32 src_length)
     }
     dest->phy = dest->row * dest->factor + dest->offset;
 }
-
 
 #ifdef __cplusplus
 }

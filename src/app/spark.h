@@ -10,11 +10,12 @@
 #include "src/mid/comm_typedef.h"
 #include "src/mid/mid_can.h"
 #include "src/mid/mid_list.h"
+#include "src/mid/mid_data.h"
 
 #define RX_LISTS_MAX        (500)
 #define RX_WINDOW_ITEMS     (15)
 #define TX_WINDOW_ITEMS     (15)
-#define RX_PARSE_ITEMS      (10)
+#define RX_PARSE_ITEMS      (12)
 
 namespace Ui {
 class Spark;
@@ -24,12 +25,17 @@ struct data_parse_t
 {
     U32 msg_lines;
     U8 object;
+	/*
     U32 id;
     U8 start_bit;
     U8 bits_length;
     float factor;
     float offset;
     float value;
+    bool motorola_order;
+    bool msb_order;
+	*/
+	struct mid_data_config_t setting;
     struct list_item_t *list;
 };
 
@@ -109,6 +115,14 @@ private slots:
     void on_pushButton_6_clicked();
 
     void on_lineEdit_24_textEdited(const QString &arg1);
+
+    void on_checkBox_5_clicked(bool checked);
+
+    void on_checkBox_6_clicked(bool checked);
+
+    void on_checkBox_8_clicked(bool checked);
+
+    void on_checkBox_7_clicked(bool checked);
 
 private:
     void creat_tx_window();

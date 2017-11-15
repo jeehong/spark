@@ -11,6 +11,8 @@ struct mid_data_config_t
 {
     U32 flag;
     long id;
+	bool bytes_order;
+	bool bits_order;
 	U8 start_bit;
     U8 bits_length;
 	U32 row;
@@ -19,7 +21,11 @@ struct mid_data_config_t
 	float phy;
 };
 
-void mid_data_can_calc(struct mid_data_config_t *dest, U8 *src, U32 src_length);
+void mid_data_can_calc(struct mid_data_config_t *dest, 
+								U8 *src, 
+								bool bytes_order, 
+								bool bits_order, 
+								U32 src_length);
 
 
 #ifdef __cplusplus

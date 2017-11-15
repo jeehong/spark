@@ -51,15 +51,18 @@ Spark::~Spark()
 struct data_parse_t * Spark::init_data_parse()
 {
     struct data_parse_t *obj;
+	
     obj = new struct data_parse_t;
     obj->list = list_init(sizeof(struct mid_data_config_t));
-    obj->msg_lines = 0;
-    obj->id = 0;
-    obj->object = 0;
-    obj->start_bit = 0;
-    obj->bits_length = 0;
-    obj->factor = 0;
-    obj->offset = 0;
+	obj->msg_lines = 0;
+	obj->object = 0;
+	obj->setting.id = 0;
+	obj->setting.start_bit = 0;
+	obj->setting.bits_length = 0;
+	obj->setting.factor = 0;
+	obj->setting.offset = 0;
+	obj->setting.bytes_order = 0;		/* Intel */
+	obj->setting.bits_order = 0; 		/* lsb */
 
     return obj;
 }
@@ -93,15 +96,21 @@ void Spark::update_rx_parse_line(const struct can_bus_frame_t *frame)
 
             rx_parse_model->item(temp_element->flag, 5)->setText(string.number(temp_element->offset, 'g', 6));
 
-            mid_data_can_calc(temp_element, (U8*)&frame->buf[0], frame->dlc);
+            string = QString("%1").arg(temp_element->bytes_order, 1, 10, QLatin1Char('0')).toUpper();
+            rx_parse_model->item(temp_element->flag, 6)->setText(string);
 
-            rx_parse_model->item(temp_element->flag, 6)->setText(string.number(temp_element->row, 'g', 6));
+            string = QString("%1").arg(temp_element->bits_order, 1, 10, QLatin1Char('0')).toUpper();
+            rx_parse_model->item(temp_element->flag, 7)->setText(string);
 
-            rx_parse_model->item(temp_element->flag, 7)->setText(string.number(temp_element->phy, 'g', 6));
+            mid_data_can_calc(temp_element, (U8*)&frame->buf[0], temp_element->bytes_order, temp_element->bits_order, frame->dlc);
 
-            rx_parse_model->item(temp_element->flag, 8)->setText(string.number(frame->time_stamp / 1000.0, 'g', 10));
+            rx_parse_model->item(temp_element->flag, 8)->setText(string.number(temp_element->row, 'g', 6));
 
-            rx_parse_model->item(temp_element->flag, 9)->setText(string.number(frame->delta_time_stamp / 1000.0, 'g', 10));
+            rx_parse_model->item(temp_element->flag, 9)->setText(string.number(temp_element->phy, 'g', 6));
+
+            rx_parse_model->item(temp_element->flag, 10)->setText(string.number(frame->time_stamp / 1000.0, 'g', 10));
+
+            rx_parse_model->item(temp_element->flag, 11)->setText(string.number(frame->delta_time_stamp / 1000.0, 'g', 10));
 
             rx_parse_table->setRowHeight(temp_element->flag, 20);
         }
@@ -309,7 +318,7 @@ void Spark::creat_rx_dock_window()
 
 void Spark::init_rx_parse_table()
 {
-    QString head_name = "Name Identifer Start-Bit Bit-Length Factor Offset Row Phy Time-Stamp Delta-Stamp";
+    QString head_name = "Name Identifer Start-Bit Bit-Length Factor Offset Mot MSB Row Phy Time-Stamp Delta-Stamp";
     QStringList list = head_name.simplified().split(" ");
 
     rx_parse_table = new QTableView(this);
@@ -318,16 +327,18 @@ void Spark::init_rx_parse_table()
     rx_parse_model->setHorizontalHeaderLabels(list);
     rx_parse_table->setModel(rx_parse_model);
     rx_parse_table->setRowHeight(0, 20);
-    rx_parse_table->setColumnWidth(0, 90);    //Name
-    rx_parse_table->setColumnWidth(1, 70);    //Identifer
+    rx_parse_table->setColumnWidth(0, 80);    //Name
+    rx_parse_table->setColumnWidth(1, 60);    //Identifer
     rx_parse_table->setColumnWidth(2, 60);    //Start-Bit
-    rx_parse_table->setColumnWidth(3, 70);    //Bit-Length
-    rx_parse_table->setColumnWidth(4, 50);    //Factor
-    rx_parse_table->setColumnWidth(5, 50);    //Offset
-    rx_parse_table->setColumnWidth(6, 50);    //Row
-    rx_parse_table->setColumnWidth(7, 80);    //Phy
-    rx_parse_table->setColumnWidth(8, 80);    //Time-Stamp;
-    rx_parse_table->setColumnWidth(9, 80);    //Delta-Stamp;
+    rx_parse_table->setColumnWidth(3, 65);    //Bit-Length
+    rx_parse_table->setColumnWidth(4, 40);    //Factor
+    rx_parse_table->setColumnWidth(5, 40);    //Offset
+    rx_parse_table->setColumnWidth(6, 30);    //Byte Order
+    rx_parse_table->setColumnWidth(7, 30);    //Bits Order
+    rx_parse_table->setColumnWidth(8, 40);    //Row
+    rx_parse_table->setColumnWidth(9, 80);    //Phy
+    rx_parse_table->setColumnWidth(10, 80);    //Time-Stamp;
+    rx_parse_table->setColumnWidth(11, 80);    //Delta-Stamp;
     rx_parse_table->show();
 }
 
@@ -453,38 +464,50 @@ void Spark::on_pushButton_clicked()
     mid_can_clear_stastic_info();
 }
 
-//rx ID
+//rx parse ID
 void Spark::on_lineEdit_22_textEdited(const QString &arg1)
 {
     bool ok;
 
-    rx_parse->id = arg1.toInt(&ok, 16);
+    rx_parse->setting.id = arg1.toInt(&ok, 16);
 }
 
-//rx Start Bit
+//rx parse Start Bit
 void Spark::on_lineEdit_23_textEdited(const QString &arg1)
 {
     bool ok;
-    rx_parse->start_bit = arg1.toInt(&ok, 10);
+    rx_parse->setting.start_bit = arg1.toInt(&ok, 10);
 }
 
-//rx Bits Length
+//rx parse Bits Length
 void Spark::on_lineEdit_20_textEdited(const QString &arg1)
 {
     bool ok;
-    rx_parse->bits_length = arg1.toInt(&ok, 10);
+    rx_parse->setting.bits_length = arg1.toInt(&ok, 10);
 }
 
-//rx factor
+//rx parse factor
 void Spark::on_lineEdit_19_textEdited(const QString &arg1)
 {
-    rx_parse->factor = arg1.toFloat();
+    rx_parse->setting.factor = arg1.toFloat();
 }
 
-//rx offset
+//rx parse offset
 void Spark::on_lineEdit_21_textEdited(const QString &arg1)
 {
-    rx_parse->offset = arg1.toFloat();
+    rx_parse->setting.offset = arg1.toFloat();
+}
+
+// rx parse moto order
+void Spark::on_checkBox_8_clicked(bool checked)
+{
+    rx_parse->setting.bytes_order = checked;
+}
+
+// rx parse msb order
+void Spark::on_checkBox_7_clicked(bool checked)
+{
+    rx_parse->setting.bits_order = checked;
 }
 
 // rx parse start
@@ -493,7 +516,7 @@ void Spark::on_pushButton_7_clicked()
     struct mid_data_config_t *element;
     QStandardItem *newItem;
 
-    if(rx_parse->id == 0)
+    if(rx_parse->setting.id == 0)
     {
         return;
     }
@@ -509,14 +532,8 @@ void Spark::on_pushButton_7_clicked()
     }
     list_insert(rx_parse->list, rx_parse->object);
     element = (struct mid_data_config_t *)list_find_data(rx_parse->list, rx_parse->object);
-    element->flag = rx_parse->object;
-    element->id = rx_parse->id;
-    element->start_bit = rx_parse->start_bit;
-    element->bits_length = rx_parse->bits_length;
-    element->factor = rx_parse->factor;
-    element->offset = rx_parse->offset;
-    element->row = 0;
-    element->phy = 0;
+    memcpy(element, &rx_parse->setting, sizeof(*element));
+	element->flag = rx_parse->object;
     rx_parse->object ++;
 }
 
@@ -758,7 +775,7 @@ void Spark::on_lineEdit_14_textEdited(const QString &arg1)
 {
     bool ok;
 
-    tx_parse->id = arg1.toInt(&ok, 16);
+    tx_parse->setting.id = arg1.toInt(&ok, 16);
 }
 
 // tx parse start-bit
@@ -766,7 +783,7 @@ void Spark::on_lineEdit_15_textEdited(const QString &arg1)
 {
     bool ok;
 
-    tx_parse->start_bit = arg1.toInt(&ok, 10);
+    tx_parse->setting.start_bit = arg1.toInt(&ok, 10);
 }
 
 // tx parse bits-length
@@ -774,25 +791,37 @@ void Spark::on_lineEdit_16_textEdited(const QString &arg1)
 {
     bool ok;
 
-    tx_parse->bits_length = arg1.toInt(&ok, 10);
+    tx_parse->setting.bits_length = arg1.toInt(&ok, 10);
 }
 
 // tx parse factor
 void Spark::on_lineEdit_17_textEdited(const QString &arg1)
 {
-    tx_parse->factor = arg1.toFloat();
+    tx_parse->setting.factor = arg1.toFloat();
 }
 
 // tx parse offset
 void Spark::on_lineEdit_18_textEdited(const QString &arg1)
 {
-    tx_parse->offset = arg1.toFloat();
+    tx_parse->setting.offset = arg1.toFloat();
 }
 
 // tx parse value
 void Spark::on_lineEdit_24_textEdited(const QString &arg1)
 {
-    tx_parse->value = arg1.toFloat();
+    tx_parse->setting.phy = arg1.toFloat();
+}
+
+// tx parse byte order 1:motorolar 0:intel
+void Spark::on_checkBox_5_clicked(bool checked)
+{
+    tx_parse->setting.bytes_order = checked;
+}
+
+// tx parse bit order 1:msb 0:lsb
+void Spark::on_checkBox_6_clicked(bool checked)
+{
+    tx_parse->setting.bits_order = checked;
 }
 
 // tx parse start
@@ -801,13 +830,16 @@ void Spark::on_pushButton_6_clicked()
     struct can_bus_frame_t *temp_element;
     float temp_float;
 
-    temp_element = (struct can_bus_frame_t *)list_find_data(can_tx_list, tx_parse->id);
+    temp_element = (struct can_bus_frame_t *)list_find_data(can_tx_list, tx_parse->setting.id);
     if(temp_element == NULL)
     {
         return;
     }
-    temp_float = (tx_parse->value - tx_parse->offset) / tx_parse->factor;
-    bits_pack(temp_float + 0.5, temp_element->buf, temp_element->dlc, tx_parse->start_bit, tx_parse->bits_length);
+    temp_float = (tx_parse->setting.phy - tx_parse->setting.offset) / tx_parse->setting.factor;
+    data_pack(temp_element->buf,
+                temp_float + 0.5,
+				tx_parse->setting.bytes_order,
+				tx_parse->setting.bits_order,
+				tx_parse->setting.start_bit,
+				tx_parse->setting.bits_length);
 }
-
-
