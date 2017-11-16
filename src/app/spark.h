@@ -36,7 +36,7 @@ struct data_parse_t
     bool msb_order;
 	*/
 	struct mid_data_config_t setting;
-    struct list_item_t *list;
+    struct list_t *list;
 };
 
 class Spark : public QMainWindow
@@ -156,7 +156,7 @@ private:
     QTableView *tx_window_table;
     QStandardItemModel *tx_window_model;
     U32 tx_msgs_lines;
-    struct list_item_t *can_tx_list;
+    struct list_t *can_tx_list;
 
     Ui::Spark *ui;
     QTimer uiTimer;

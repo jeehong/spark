@@ -43,7 +43,7 @@ void mid_can_apply_cfg(void);
 const canBusStatistics *mid_can_process(void);
 void mid_can_clear_stastic_info(void);
 const struct can_bus_frame_t *mid_can_new_frame(void);
-struct list_item_t *mid_can_tx_list(void);
+struct list_t *mid_can_tx_list(void);
 
 #ifdef __cplusplus
 }

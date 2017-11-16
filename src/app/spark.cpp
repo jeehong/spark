@@ -28,6 +28,8 @@ Spark::Spark(QMainWindow *parent) :
     // tx_parse init
     tx_parse = init_data_parse();
     memset(&tx_msg_config, 0, sizeof(tx_msg_config));
+    tx_msg_config.config_delta_time_stamp = 100;
+    tx_msg_config.dlc = MAX_DLC;
     tx_window_table = NULL;
     tx_window_model = NULL;
     tx_msgs_lines = 0;
@@ -59,8 +61,8 @@ struct data_parse_t * Spark::init_data_parse()
 	obj->setting.id = 0;
 	obj->setting.start_bit = 0;
 	obj->setting.bits_length = 0;
-	obj->setting.factor = 0;
-	obj->setting.offset = 0;
+    obj->setting.factor = 1;
+    obj->setting.offset = 0;
 	obj->setting.bytes_order = 0;		/* Intel */
 	obj->setting.bits_order = 0; 		/* lsb */
 
@@ -70,14 +72,14 @@ struct data_parse_t * Spark::init_data_parse()
 void Spark::update_rx_parse_line(const struct can_bus_frame_t *frame)
 {
     QString string;
-    struct list_element_t *list;
+    struct list_item_t *temp_item;
     struct mid_data_config_t *temp_element;
 
     if(rx_parse == NULL)
         return;
-    for(list = rx_parse->list->head; list != NULL; list = list->next)
+    for(temp_item = rx_parse->list->ended.next; temp_item != &rx_parse->list->ended; temp_item = temp_item->next)
     {
-        temp_element = (struct mid_data_config_t *)list->data;
+        temp_element = (struct mid_data_config_t *)temp_item->data;
         if(temp_element->id == frame->id)
         {
             string = QString("%1").arg(temp_element->flag, 10, 10, QLatin1Char('0'));
@@ -210,7 +212,7 @@ void Spark::update_receive_message_window()
         update_rx_parse_line(can_frame);
     }
     msgs_index = 0;
-    for(struct list_element_t *list = can_tx_list->head; list != NULL; list = list->next)
+    for(struct list_item_t *list = can_tx_list->ended.next; list != &can_tx_list->ended; list = list->next)
     {
         temp_element = (struct can_bus_frame_t *)list->data;
 
@@ -275,8 +277,8 @@ void Spark::main_window_update()
 
 void Spark::init_rx_window_table()
 {
-    QString head_name = "Rx Chn Identifer Flag DLC D0 D1 D2 D3 D4 D5 D6 D7 Time-Stamp Delta-Stamp";
-    QStringList list = head_name.simplified().split(" ");
+    QString ended_name = "Rx Chn Identifer Flag DLC D0 D1 D2 D3 D4 D5 D6 D7 Time-Stamp Delta-Stamp";
+    QStringList list = ended_name.simplified().split(" ");
 
     rx_window_table = new QTableView(this);
     rx_window_table->verticalHeader()->hide();
@@ -318,8 +320,8 @@ void Spark::creat_rx_dock_window()
 
 void Spark::init_rx_parse_table()
 {
-    QString head_name = "Name Identifer Start-Bit Bit-Length Factor Offset Mot MSB Row Phy Time-Stamp Delta-Stamp";
-    QStringList list = head_name.simplified().split(" ");
+    QString ended_name = "Name Identifer Start-Bit Bit-Length Factor Offset Mot MSB Row Phy Time-Stamp Delta-Stamp";
+    QStringList list = ended_name.simplified().split(" ");
 
     rx_parse_table = new QTableView(this);
     rx_parse_table->verticalHeader()->hide();
@@ -679,8 +681,8 @@ void Spark::on_lineEdit_9_textEdited(const QString &arg1)
 
 void Spark::init_tx_table()
 {
-    QString head_name = "Tx Chn Identifer Flag DLC D0 D1 D2 D3 D4 D5 D6 D7 Time-Stamp Delta-Stamp";
-    QStringList list = head_name.simplified().split(" ");
+    QString ended_name = "Tx Chn Identifer Flag DLC D0 D1 D2 D3 D4 D5 D6 D7 Time-Stamp Delta-Stamp";
+    QStringList list = ended_name.simplified().split(" ");
 
     tx_window_table = new QTableView(this);
     tx_window_table->verticalHeader()->hide();
@@ -722,7 +724,14 @@ void Spark::creat_tx_window()
 // tx window clear
 void Spark::on_pushButton_11_clicked()
 {
+    QStandardItem *newItem;
 
+    can_tx_list->destory_all_items(can_tx_list);
+
+    for(; tx_msgs_lines != 0; tx_msgs_lines --)
+    {
+        tx_window_model->removeRow(tx_msgs_lines - 1);
+    }
 }
 
 // tx start window

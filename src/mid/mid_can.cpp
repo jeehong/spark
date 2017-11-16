@@ -15,8 +15,8 @@ struct mid_can_running_t
     int connect;
     char chn_info[CAN_SPPPORT_CHANNELS][CAN_CHANNEL_INFO_LENGTH];
 	char get_chns_err[CAN_CHANNEL_INFO_LENGTH];
-	struct list_item_t *rx_list;
-	struct list_item_t *tx_list;
+	struct list_t *rx_list;
+	struct list_t *tx_list;
     int cur_chn;
     unsigned int baudrate;
 	int bus_on;
@@ -117,8 +117,8 @@ void mid_can_clear_stastic_info(void)
 
 void mid_can_init(int device_type)
 {
-	kvaser.rx_list = list_init(sizeof(struct can_bus_frame_t));
-	kvaser.tx_list = list_init(sizeof(struct can_bus_frame_t));
+    kvaser.rx_list = list_init(sizeof(struct can_bus_frame_t));
+    kvaser.tx_list = list_init(sizeof(struct can_bus_frame_t));
 	kvaser.baudrate = CAN_BAUDRATE_DEFAULT;
     if(device_type == CAN_DEVICE_KVASER)
     {
@@ -127,7 +127,7 @@ void mid_can_init(int device_type)
 	mid_can_refresh_device();
 }
 
-struct list_item_t *mid_can_tx_list(void)
+struct list_t *mid_can_tx_list(void)
 {
     return kvaser.tx_list;
 }
@@ -170,17 +170,13 @@ static void filling_data(void)
 static void tx_process(void)
 {
     struct can_bus_frame_t *temp_frame = NULL;
-    struct list_element_t *temp_element;
+    struct list_item_t *temp_element;
     unsigned long time_now;
 
-
-    if(kvaser.tx_list->head == NULL)
-    {
-        return;
-    }
-    temp_element = kvaser.tx_list->head;
+	
+    temp_element = kvaser.tx_list->ended.next;
     time_now = canReadTimer(kvaser.handle);
-    do
+    while(temp_element != &kvaser.tx_list->ended)
     {
         temp_frame = (struct can_bus_frame_t*)(temp_element->data);
         if(abs(time_now - temp_frame->time_stamp)
@@ -191,7 +187,7 @@ static void tx_process(void)
             temp_frame->time_stamp = time_now;
         }
         temp_element = temp_element->next;
-    }while(temp_element != NULL);
+    }
 }
 
 const canBusStatistics *mid_can_process(void)
@@ -214,12 +210,14 @@ const canBusStatistics *mid_can_process(void)
 const struct can_bus_frame_t *mid_can_new_frame(void)
 {
     struct can_bus_frame_t *temp_frame = NULL;
-    struct list_element_t *temp_element;
+    struct list_item_t *temp_element;
 
-    if(kvaser.rx_list->head == NULL)
+    if(kvaser.rx_list->ended.next == &kvaser.rx_list->ended)
+    {
         return NULL;
-    temp_element = kvaser.rx_list->head;
-    do
+    }
+    temp_element = kvaser.rx_list->ended.next;
+    while(temp_element != &kvaser.rx_list->ended)
     {
         if(((struct can_bus_frame_t*)temp_element->data)->new_data == TRUE)
         {
@@ -228,7 +226,7 @@ const struct can_bus_frame_t *mid_can_new_frame(void)
             break;
         }
         temp_element = temp_element->next;
-    }while(temp_element != NULL);
+    }
 
     return temp_frame;
 }

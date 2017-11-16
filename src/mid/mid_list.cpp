@@ -5,150 +5,215 @@
 extern "C" {
 #endif
 
-struct list_item_t *list_init(int element_size)
+static void list_destory(struct list_t *list);
+static void all_items_destory(struct list_t *list);
+void item_destory(struct list_t *list, U32 sequence);
+
+/*
+ * 
+ */
+struct list_t *list_init(int entity_size)
 {
-	struct list_item_t *new_item;
+	struct list_t *new_list;
 
-	new_item = (struct list_item_t *)malloc(sizeof(struct list_item_t));
+	new_list = (struct list_t *)malloc(sizeof(struct list_t));
 
-	if(new_item != NULL)
+	if(new_list != NULL)
 	{
-		new_item->destory = NULL;
-		new_item->element_size = element_size;
-		new_item->head = NULL;
-		new_item->size = 0;
+        new_list->destory_list = list_destory;
+        new_list->destory_all_items = all_items_destory;
+        new_list->destory_item = item_destory;
+		new_list->entity_size = entity_size;
+        new_list->ended.sequence = 0xFFFFFFFF;
+		new_list->ended.data = NULL;
+		new_list->ended.previous = &new_list->ended;
+		new_list->ended.next = &new_list->ended;
+		new_list->items = 0;
 	}
 	
-	return new_item;
+	return new_list;
 }
 
-static struct list_element_t *find_pre_element(struct list_item_t *list, long flag)
+struct list_item_t *find_item(struct list_t *list, U32 sequence)
 {
-	struct list_element_t *temp;
-	
+	struct list_item_t *temp_item;
+
 	if(list == NULL)
-        return NULL;
-	temp = list->head;
-	while(temp->next != NULL)
 	{
-		if(flag == temp->next->insert_flag)
-		{	
-            return temp;
+        return NULL;
+	}
+	for(temp_item = (struct list_item_t *)&(list->ended); 
+		; 
+		temp_item = temp_item->next)
+	{
+        if(temp_item->sequence == sequence)
+		{
+			return temp_item;
 		}
-		temp = temp->next;
+		else if(temp_item->next == (struct list_item_t *)&(list->ended))
+		{
+			return NULL;
+		}
 	}
-
-    return NULL;
 }
 
-
-static struct list_element_t *find_element(struct list_item_t *list, long flag)
+inline struct list_item_t *malloc_item(U32 size)
 {
-    struct list_element_t *temp;
+    unsigned char *new_entity = NULL;
+    struct list_item_t *new_item = NULL;
 
-    if(list == NULL)
-        return NULL;
-    if(list->head == NULL)
-        return NULL;
-    temp = list->head;
-    while(temp->next != NULL)
+    new_item = (struct list_item_t *)malloc(sizeof(struct list_item_t));
+    if(new_item == NULL)
     {
-        if(flag == temp->insert_flag)
-        {
-            return temp;
-        }
-        temp = temp->next;
-    }
-    if(temp->insert_flag == flag)
-        return temp;
-    else
         return NULL;
+    }
+    new_entity = (unsigned char *)malloc(size);
+    if(new_entity == NULL)
+    {
+        free(new_item);
+        return NULL;
+    }
+    new_item->data = new_entity;
+
+    return new_item;
 }
 
-void list_insert(struct list_item_t *list, long flag)
+inline void free_item(struct list_item_t *item)
 {
-    struct list_element_t *new_element, *temp, *pre;
+    free(item->data);
+	free(item);
+}
 
+void list_insert_end(struct list_t *list, long sequence)
+{
+    struct list_item_t *new_item = NULL, *temp_item = &list->ended;
+
+	
 	if(list == NULL)
-        return;
-	if(list->head != NULL && find_element(list, flag) != NULL)
-        return;
-	new_element = (struct list_element_t *)malloc(sizeof(struct list_element_t));
-	if(new_element == NULL)
-        return;
-	new_element->data = malloc(list->element_size);
-	if(new_element->data == NULL)
 	{
-		free(new_element);
 		return;
 	}
-	new_element->insert_flag = flag;
-	new_element->next = NULL;
-	
-	if(list->head == NULL)
+
+	if(find_item(list, sequence) != NULL)
 	{
-		list->head = new_element;
+		return;
 	}
 	else
 	{
-        temp = list->head;
-        pre = temp;
-        while(temp->next != NULL)
+        new_item = malloc_item(list->entity_size);
+		if(new_item == NULL)
 		{
-            if(new_element->insert_flag < temp->insert_flag)
-            {
-				break;
-            }
-            pre = temp;
-			temp = temp->next;
-        }
-        if(temp->next == NULL)
-        {
-            pre = temp;
-        }
-        if(temp == list->head
-            && new_element->insert_flag < temp->insert_flag)
-        {
-            new_element->next = temp;
-            list->head = new_element;
-        }
-        else
-        {
-            new_element->next = pre->next;
-            pre->next = new_element;
-        }
-    }
+			return;
+		}
+        new_item->next = temp_item;
+        new_item->previous = temp_item->previous;
+        temp_item->previous->next = new_item;
+        temp_item->previous = new_item;
+        new_item->sequence = sequence;
+
+		list->items ++;
+	}
+}
+	
+void list_insert(struct list_t *list, U32 sequence)
+{
+	struct list_item_t *new_item = NULL, *temp_item;
+
+	if(list == NULL)
+	{
+		return;
+	}
+
+	if(find_item(list, sequence) != NULL)
+	{
+		return;
+	}
+	else
+	{
+        new_item = malloc_item(list->entity_size);
+		if(new_item == NULL)
+		{
+			return;
+		}
+		for( temp_item = (struct list_item_t *)&(list->ended); 
+                temp_item->next->sequence <= sequence;
+				temp_item = temp_item->next)
+		{}
+		new_item->next = temp_item->next;
+		new_item->previous = temp_item;
+        new_item->next->previous = new_item;
+        new_item->previous->next = new_item;
+        new_item->sequence = sequence;
+
+		list->items ++;
+	}	
 }
 
-void list_remove(struct list_item_t *list, long flag)
+void item_destory(struct list_t *list, U32 sequence)
 {
-	struct list_element_t *temp, *rm_obj;
+    struct list_item_t *rm_item = NULL;
 	
 	if(list == NULL)
-		return;
-
-	temp = find_pre_element(list, flag);
-	if(temp != NULL)
 	{
-		rm_obj = temp->next;
-		temp->next = temp->next->next;
-		free(rm_obj->data);
-		free(rm_obj);
+		return;
+	}
+
+	rm_item = find_item(list, sequence);
+	if(rm_item == NULL)
+	{
+		return;
+	}
+	else
+	{
+		rm_item->next->previous = rm_item->previous;
+		rm_item->previous->next = rm_item->next;
+		if(list->destory_item != NULL)
+		{
+            list->destory_item(list, rm_item->sequence);
+            list->items --;
+		}
 	}
 }
 
-unsigned char *list_find_data(struct list_item_t *list, long flag)
+static void all_items_destory(struct list_t *list)
 {
-    struct list_element_t *element = find_element(list, flag);
+	struct list_item_t *temp_item;
 
-    if(element == NULL)
-        return NULL;
-    else
-        return (unsigned char*)element->data;
+	if(list == NULL)
+	{
+		return;
+	}
+    for(temp_item = (struct list_item_t *)(list->ended.next);
+		; 
+		temp_item = temp_item->next)
+	{
+		if(temp_item == (struct list_item_t *)&(list->ended))
+		{
+			return;
+		}
+		else
+		{
+			item_destory(list, temp_item->sequence);
+		}
+	}
 }
 
-void list_destory(struct list_item_t *list)
+static void list_destory(struct list_t *list)
 {
+    list->destory_all_items(list);
+    free(list);
+}
+
+unsigned char *list_find_data(struct list_t *list, U32 sequence)
+{
+   struct list_item_t *temp_item = NULL;
+
+    temp_item = find_item(list, sequence);
+	
+    if(temp_item == NULL)
+        return NULL;
+    else
+        return (unsigned char*)temp_item->data;
 }
 
 
