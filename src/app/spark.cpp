@@ -435,6 +435,7 @@ void Spark::on_pushButton_2_clicked()
     }
 }
 
+// setting apply
 void Spark::on_pushButton_9_clicked()
 {
     mid_can_apply_cfg();
@@ -718,6 +719,12 @@ void Spark::creat_tx_window()
     addDockWidget(Qt::RightDockWidgetArea, dock);
 }
 
+// tx window clear
+void Spark::on_pushButton_11_clicked()
+{
+
+}
+
 // tx start window
 void Spark::on_pushButton_3_clicked()
 {
@@ -843,3 +850,5 @@ void Spark::on_pushButton_6_clicked()
 				tx_parse->setting.start_bit,
 				tx_parse->setting.bits_length);
 }
+
+

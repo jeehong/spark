@@ -71,8 +71,8 @@ void mid_can_set_baudrate(unsigned int baudrate)
 
 void mid_can_apply_cfg(void)
 {
+    canSetBusParams(kvaser.handle, kvaser.baudrate, 0, 0, 0, 0, 0);
     kvaser.handle = canOpenChannel(kvaser.cur_chn, canOPEN_ACCEPT_VIRTUAL);
-    
     kvFlashLeds(kvaser.handle, kvLED_ACTION_ALL_LEDS_ON, 2000);
 }
 

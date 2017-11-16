@@ -124,6 +124,8 @@ private slots:
 
     void on_checkBox_7_clicked(bool checked);
 
+    void on_pushButton_11_clicked();
+
 private:
     void creat_tx_window();
     void init_tx_table();
