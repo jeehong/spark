@@ -11,6 +11,7 @@
 #include "src/mid/mid_bits.h"
 #include "src/mid/mid_list.h"
 #include "src/mid/mid_data.h"
+#include "src/mid/mid_pool.h"
 #include "src/mid/comm_typedef.h"
 
 Spark::Spark(QMainWindow *parent) :
@@ -40,6 +41,7 @@ Spark::Spark(QMainWindow *parent) :
     on_pushButton_10_clicked();
     rx_dec_display = FALSE;
     mid_can_init(CAN_DEVICE_KVASER);
+	load_pool = mid_pool_register(20);
     can_tx_list = mid_can_tx_list();
     uiTimer.setInterval(5);
     connect(&uiTimer, SIGNAL(timeout()), this, SLOT(main_window_update()));
@@ -271,7 +273,9 @@ void Spark::main_window_update()
     ui->lcdNumber->display(QString().setNum(c));
     ui->lcdNumber_2->display(QString().setNum(0));
     ui->lcdNumber_3->display(QString().setNum(status->errFrame));
-    ui->progressBar->setValue(status->busLoad);
+	mid_pool_push_var(load_pool, status->busLoad, 1);
+    ui->progressBar->setValue(mid_pool_get_avg(load_pool));
+
     update_receive_message_window();
 }
 

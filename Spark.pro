@@ -17,7 +17,8 @@ SOURCES += src/app/main.cpp\
             src/mid/mid_can.cpp \
             src/mid/mid_bits.cpp \
             src/mid/mid_list.cpp \
-            src/mid/mid_data.cpp
+            src/mid/mid_data.cpp \
+            src/mid/mid_pool.cpp
 
 HEADERS  += src/app/spark.h \
             src/driver/canlib.h \
@@ -29,7 +30,8 @@ HEADERS  += src/app/spark.h \
             src/mid/comm_typedef.h \
             src/mid/mid_bits.h \
             src/mid/mid_list.h \
-            src/mid/mid_data.h
+            src/mid/mid_data.h \
+            src/mid/mid_pool.h
 
 LIBS += canlib32.dll
 

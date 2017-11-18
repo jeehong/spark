@@ -138,7 +138,7 @@ private:
     QTableView *rx_parse_table;
     QStandardItemModel *rx_parse_model;
     struct data_parse_t *rx_parse;
-
+	U8 load_pool;
     // rx control
     QTableView *rx_window_table;
     QStandardItemModel *rx_window_model;

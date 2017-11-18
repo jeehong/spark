@@ -94,16 +94,16 @@ typedef  char   CHAR;
 #define  MASK15			(U16)(~BIT15)
 
 #define  RANGE_LOFF_ROFF(VARIABLE,LOW,HIGH)	 	((((VARIABLE)>=(LOW)) && ((VARIABLE) <= (HIGH)))? 1:0)
-#define  RANGE_LOPEN_ROFF(VARIABLE,LOW,HIGH)	((((VARIABLE)>(LOW)) && ((VARIABLE) <= (HIGH)))? 1:0)	/*左开右闭区间*/
-#define  RANGE_LOPEN_ROPEN(VARIABLE,LOW,HIGH)	((((VARIABLE)>(LOW)) && ((VARIABLE) < (HIGH)))? 1:0)	/*全开区间*/
-#define  RANGE_LOFF_ROPEN(VARIABLE,LOW,HIGH)	((((VARIABLE)>=(LOW)) && ((VARIABLE) < (HIGH)))? 1:0)	/*左闭右开区间*/
+#define  RANGE_LOPEN_ROFF(VARIABLE,LOW,HIGH)	((((VARIABLE)>(LOW)) && ((VARIABLE) <= (HIGH)))? 1:0)
+#define  RANGE_LOPEN_ROPEN(VARIABLE,LOW,HIGH)	((((VARIABLE)>(LOW)) && ((VARIABLE) < (HIGH)))? 1:0)
+#define  RANGE_LOFF_ROPEN(VARIABLE,LOW,HIGH)	((((VARIABLE)>=(LOW)) && ((VARIABLE) < (HIGH)))? 1:0)
 #define  MAX(A,B)				(((A)>(B))?1:0)
 #define  IS_SAME(A,B)			(((A) == (B))?1:0)
 #define  IS_UN_SAME(A,B)		(((A) == (B))?0:1)
 
 
-#define  CNT_ADD_OVER(name,max_value)		(((name)++) >= (max_value))?(1):(0)				/* 加计数溢出 */
-#define  CNT_SUB_OVER(name,min_value)		(((name)--) <= (min_value))?(1):(0)				/* 减计数溢出 */
+#define  CNT_ADD_OVER(name,max_value)		(((name)++) >= (max_value))?(1):(0)
+#define  CNT_SUB_OVER(name,min_value)		(((name)--) <= (min_value))?(1):(0)
 
 #define  U32_INVALID_VALUE   	(0xffffffffuL)
 #define  U16_INVALID_VALUE		(0xffffuL)
