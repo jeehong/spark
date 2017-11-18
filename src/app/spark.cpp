@@ -156,7 +156,7 @@ void Spark::update_receive_message_window()
             {
                 break;
             }
-            if(msgs[msgs_index].mutex_val == U32_INVALID_VALUE)
+            if(msgs[msgs_index].mutex_val == (long)U32_INVALID_VALUE)
             {
                 msgs[msgs_index].mutex_val = can_frame->id;
                 msgs[msgs_index].line_num = msgs_index;
@@ -416,7 +416,7 @@ void Spark::on_comboBox_2_activated(int index)
 
 void Spark::on_comboBox_2_currentIndexChanged(int index)
 {
-
+    index = index;
 }
 
 void Spark::on_pushButton_2_clicked()
@@ -538,7 +538,7 @@ void Spark::on_pushButton_7_clicked()
         rx_parse_model->setItem(rx_parse->object, index, newItem);
     }
     list_insert(rx_parse->list, rx_parse->object);
-    element = (struct mid_data_config_t *)list_find_data(rx_parse->list, rx_parse->object);
+    element = (struct mid_data_config_t *)list_find_entity(rx_parse->list, rx_parse->object);
     memcpy(element, &rx_parse->setting, sizeof(*element));
 	element->flag = rx_parse->object;
     rx_parse->object ++;
@@ -580,7 +580,7 @@ void Spark::on_pushButton_10_clicked()
     {
         for(msgs_index = 0; msgs_index < RX_LISTS_MAX; msgs_index ++)
         {
-            if(msgs[msgs_index].mutex_val != U32_INVALID_VALUE)
+            if(msgs[msgs_index].mutex_val != (long)U32_INVALID_VALUE)
             {
                 rx_window_model->removeRow(msgs[msgs_index].line_num);
                 msgs[msgs_index].mutex_val = U32_INVALID_VALUE;
@@ -728,8 +728,6 @@ void Spark::creat_tx_window()
 // tx window clear
 void Spark::on_pushButton_11_clicked()
 {
-    QStandardItem *newItem;
-
     can_tx_list->destory_all_items(can_tx_list);
 
     for(; tx_msgs_lines != 0; tx_msgs_lines --)
@@ -741,7 +739,7 @@ void Spark::on_pushButton_11_clicked()
 // tx delete id
 void Spark::on_pushButton_12_clicked()
 {
-    struct list_item_t *rm_item = (struct list_item_t *)list_find_data(can_tx_list, tx_msg_config.id);
+    struct list_item_t *rm_item = (struct list_item_t *)list_find_entity(can_tx_list, tx_msg_config.id);
     if(rm_item != NULL)
     {
         can_tx_list->destory_item(can_tx_list, tx_msg_config.id);
@@ -768,12 +766,12 @@ void Spark::on_pushButton_3_clicked()
     {
         creat_tx_window();
     }
-    if(list_find_data(can_tx_list, tx_msg_config.id) != NULL)
+    if(list_find_entity(can_tx_list, tx_msg_config.id) != NULL)
     {
         return;
     }
     list_insert(can_tx_list, tx_msg_config.id);
-    temp_element = (struct can_bus_frame_t *)list_find_data(can_tx_list, tx_msg_config.id);
+    temp_element = (struct can_bus_frame_t *)list_find_entity(can_tx_list, tx_msg_config.id);
 
     if(temp_element == NULL)
     {
@@ -862,7 +860,7 @@ void Spark::on_pushButton_6_clicked()
     struct can_bus_frame_t *temp_element;
     float temp_float;
 
-    temp_element = (struct can_bus_frame_t *)list_find_data(can_tx_list, tx_parse->setting.id);
+    temp_element = (struct can_bus_frame_t *)list_find_entity(can_tx_list, tx_parse->setting.id);
     if(temp_element == NULL)
     {
         return;

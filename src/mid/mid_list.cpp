@@ -7,7 +7,7 @@ extern "C" {
 
 static void list_destory(struct list_t *list);
 static void all_items_destory(struct list_t *list);
-void item_destory(struct list_t *list, U32 sequence);
+static void item_destory(struct list_t *list, U32 sequence);
 
 /*
  * 
@@ -57,7 +57,7 @@ struct list_item_t *find_item(struct list_t *list, U32 sequence)
 	}
 }
 
-inline struct list_item_t *malloc_item(U32 size)
+static struct list_item_t *malloc_item(U32 size)
 {
     unsigned char *new_entity = NULL;
     struct list_item_t *new_item = NULL;
@@ -78,7 +78,7 @@ inline struct list_item_t *malloc_item(U32 size)
     return new_item;
 }
 
-inline void free_item(struct list_item_t *item)
+static void free_item(struct list_item_t *item)
 {
     free(item->data);
 	free(item);
@@ -149,7 +149,7 @@ void list_insert(struct list_t *list, U32 sequence)
 	}	
 }
 
-void item_destory(struct list_t *list, U32 sequence)
+static void item_destory(struct list_t *list, U32 sequence)
 {
     struct list_item_t *rm_item = NULL;
 	
@@ -167,11 +167,7 @@ void item_destory(struct list_t *list, U32 sequence)
 	{
 		rm_item->next->previous = rm_item->previous;
 		rm_item->previous->next = rm_item->next;
-		if(list->destory_item != NULL)
-		{
-            list->destory_item(list, rm_item->sequence);
-            list->items --;
-		}
+		free_item(rm_item);
 	}
 }
 
@@ -200,11 +196,11 @@ static void all_items_destory(struct list_t *list)
 
 static void list_destory(struct list_t *list)
 {
-    list->destory_all_items(list);
+	all_items_destory(list);
     free(list);
 }
 
-unsigned char *list_find_data(struct list_t *list, U32 sequence)
+unsigned char *list_find_entity(struct list_t *list, U32 sequence)
 {
    struct list_item_t *temp_item = NULL;
 

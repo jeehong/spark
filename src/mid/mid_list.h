@@ -27,7 +27,7 @@ struct list_t
 
 struct list_t *list_init(int entity_size);
 void list_insert(struct list_t *list, U32 sequence);
-unsigned char *list_find_data(struct list_t *list, U32 sequence);
+unsigned char *list_find_entity(struct list_t *list, U32 sequence);
 
 #ifdef __cplusplus
 }

@@ -148,7 +148,7 @@ private:
     bool rx_dec_display;
     bool fixed_posions;
     struct {
-        U32 mutex_val;
+        long mutex_val;
         U32 line_num;
     } msgs[RX_LISTS_MAX];
 

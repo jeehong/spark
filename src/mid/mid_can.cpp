@@ -154,7 +154,7 @@ static void filling_data(void)
 		else
 		{
             list_insert(kvaser.rx_list, src.id);
-            dest = (struct can_bus_frame_t *)list_find_data(kvaser.rx_list, src.id);
+            dest = (struct can_bus_frame_t *)list_find_entity(kvaser.rx_list, src.id);
             src.chn = kvaser.cur_chn;
             src.new_data = TRUE;
             if(src.time_stamp > dest->time_stamp)
