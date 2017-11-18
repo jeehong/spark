@@ -734,6 +734,18 @@ void Spark::on_pushButton_11_clicked()
     }
 }
 
+// tx delete id
+void Spark::on_pushButton_12_clicked()
+{
+    struct list_item_t *rm_item = (struct list_item_t *)list_find_data(can_tx_list, tx_msg_config.id);
+    if(rm_item != NULL)
+    {
+        can_tx_list->destory_item(can_tx_list, tx_msg_config.id);
+        tx_msgs_lines --;
+        tx_window_model->removeRow(tx_msgs_lines);
+    }
+}
+
 // tx start window
 void Spark::on_pushButton_3_clicked()
 {
@@ -859,5 +871,3 @@ void Spark::on_pushButton_6_clicked()
 				tx_parse->setting.start_bit,
 				tx_parse->setting.bits_length);
 }
-
-

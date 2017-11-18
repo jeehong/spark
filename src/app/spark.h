@@ -126,6 +126,8 @@ private slots:
 
     void on_pushButton_11_clicked();
 
+    void on_pushButton_12_clicked();
+
 private:
     void creat_tx_window();
     void init_tx_table();
