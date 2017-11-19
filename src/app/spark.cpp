@@ -19,30 +19,74 @@ Spark::Spark(QMainWindow *parent) :
     ui(new Ui::Spark)
 {
     ui->setupUi(this);
-    rx_window_table = NULL;
-    rx_window_model = NULL;
-    rx_parse_table = NULL;
-    rx_window_refresh = FALSE;
 
+    // rx_window
+    int rx_window_column_width[RX_WINDOW_ITEMS] =
+    {
+        90/*Rx*/,30/*Chn*/,70/*Identifer*/,30/*Flag*/,30/*DLC*/,
+        30/*D0*/,30/*D1*/,30/*D2*/,30/*D3*/,30/*D4*/,30/*D5*/,
+        30/*D6*/,30/*D7*/,80/*Time-Stamp*/,80/*Delta-Stamp*/
+    };
+    init_dock_window(&rx.window,
+                    "Rx Window",
+                    700,
+                    200,
+                    "Rx Chn Identifer Flag DLC D0 D1 D2 D3 D4 D5 D6 D7 Time-Stamp Delta-Stamp",
+                    RX_WINDOW_ITEMS,
+                    rx_window_column_width);
+
+    // rx_parse_window
+    int rx_parse_window_column_width[RX_WINDOW_ITEMS] =
+    {
+        80/*Name*/,60/*Identifer*/,60/*Start-Bit*/,65/*Bit-Length*/,
+        40/*Factor*/,40/*Offset*/,30/*Byte Order*/,30/*Bits Order*/,
+        40/*Row*/,80/*Phy*/,80/*Time-Stamp*/,80/*Delta-Stamp*/
+    };
+    init_dock_window(&rx_parse_window,
+                    "Rx Parse Window",
+                    700,
+                    200,
+                    "Name Identifer Start-Bit Bit-Length Factor Offset Mot MSB Row Phy Time-Stamp Delta-Stamp",
+                    RX_PARSE_ITEMS,
+                    rx_parse_window_column_width);
+
+    rx.refresh = FALSE;
     // rx_parse init
     rx_parse = init_data_parse();
-    // tx_parse init
-    tx_parse = init_data_parse();
-    memset(&tx_msg_config, 0, sizeof(tx_msg_config));
-    tx_msg_config.config_delta_time_stamp = 100;
-    tx_msg_config.dlc = MAX_DLC;
-    tx_window_table = NULL;
-    tx_window_model = NULL;
-    tx_msgs_lines = 0;
 
-    fixed_posions = FALSE;
-    rx_accept_id = 0;
-    rx_reject_id = 0;
-    on_pushButton_10_clicked();
-    rx_dec_display = FALSE;
+    memset(&tx.msg_config, 0, sizeof(tx.msg_config));
+    tx.msg_config.config_delta_time_stamp = 100;
+    tx.msg_config.dlc = MAX_DLC;
+    // tx_window
+    int tx_window_column_width[RX_WINDOW_ITEMS] =
+    {
+        90/*Tx*/,30/*Chn*/,70/*Identifer*/,30/*Flag*/,30/*DLC*/,
+        30/*D0 */,30/*D1*/,30/*D2*/,30/*D3*/,30/*D4*/,30/*D5*/,
+        30/*D6*/,30/*D7*/,80/*Time-Stamp*/,80/*Delta-Stamp*/
+    };
+    init_dock_window(&tx.window,
+                    "Tx Window",
+                    700,
+                    200,
+                    "Tx Chn Identifer Flag DLC D0 D1 D2 D3 D4 D5 D6 D7 Time-Stamp Delta-Stamp",
+                    TX_WINDOW_ITEMS,
+                    tx_window_column_width);
+    tx.msgs = 0;
+    // tx_parse init
+    tx.parse = init_data_parse();
+
+    rx.fixed_posions = FALSE;
+    rx.accept_id = 0;
+    rx.reject_id = 0;
+    rx.dec_display = FALSE;
+    for(int index = 0; index < RX_LISTS_MAX; index ++)
+    {
+        rx.locate[index].line = 0;
+        rx.locate[index].mutex = U32_INVALID_VALUE;
+    }
     mid_can_init(CAN_DEVICE_KVASER);
 	load_pool = mid_pool_register(20);
-    can_tx_list = mid_can_tx_list();
+    tx.list = mid_can_tx_list();
     uiTimer.setInterval(5);
     connect(&uiTimer, SIGNAL(timeout()), this, SLOT(main_window_update()));
 }
@@ -85,38 +129,38 @@ void Spark::update_rx_parse_line(const struct can_bus_frame_t *frame)
         if(temp_element->id == frame->id)
         {
             string = QString("%1").arg(temp_element->flag, 10, 10, QLatin1Char('0'));
-            rx_parse_model->item(temp_element->flag, 0)->setText(string);
+            rx_parse_window.model->item(temp_element->flag, 0)->setText(string);
 
             string = QString("%1").arg(frame->id, 8, 16, QLatin1Char('0')).toUpper();
-            rx_parse_model->item(temp_element->flag, 1)->setText(string);
+            rx_parse_window.model->item(temp_element->flag, 1)->setText(string);
 
             string = QString("%1").arg(temp_element->start_bit, 2, 10, QLatin1Char('0')).toUpper();
-            rx_parse_model->item(temp_element->flag, 2)->setText(string);
+            rx_parse_window.model->item(temp_element->flag, 2)->setText(string);
 
             string = QString("%1").arg(temp_element->bits_length, 2, 10, QLatin1Char('0')).toUpper();
-            rx_parse_model->item(temp_element->flag, 3)->setText(string);
+            rx_parse_window.model->item(temp_element->flag, 3)->setText(string);
 
-            rx_parse_model->item(temp_element->flag, 4)->setText(string.number(temp_element->factor, 'g', 6));
+            rx_parse_window.model->item(temp_element->flag, 4)->setText(string.number(temp_element->factor, 'g', 6));
 
-            rx_parse_model->item(temp_element->flag, 5)->setText(string.number(temp_element->offset, 'g', 6));
+            rx_parse_window.model->item(temp_element->flag, 5)->setText(string.number(temp_element->offset, 'g', 6));
 
             string = QString("%1").arg(temp_element->bytes_order, 1, 10, QLatin1Char('0')).toUpper();
-            rx_parse_model->item(temp_element->flag, 6)->setText(string);
+            rx_parse_window.model->item(temp_element->flag, 6)->setText(string);
 
             string = QString("%1").arg(temp_element->bits_order, 1, 10, QLatin1Char('0')).toUpper();
-            rx_parse_model->item(temp_element->flag, 7)->setText(string);
+            rx_parse_window.model->item(temp_element->flag, 7)->setText(string);
 
             mid_data_can_calc(temp_element, (U8*)&frame->buf[0], temp_element->bytes_order, temp_element->bits_order, frame->dlc);
 
-            rx_parse_model->item(temp_element->flag, 8)->setText(string.number(temp_element->row, 'g', 6));
+            rx_parse_window.model->item(temp_element->flag, 8)->setText(string.number(temp_element->row, 'g', 6));
 
-            rx_parse_model->item(temp_element->flag, 9)->setText(string.number(temp_element->phy, 'g', 6));
+            rx_parse_window.model->item(temp_element->flag, 9)->setText(string.number(temp_element->phy, 'g', 6));
 
-            rx_parse_model->item(temp_element->flag, 10)->setText(string.number(frame->time_stamp / 1000.0, 'g', 10));
+            rx_parse_window.model->item(temp_element->flag, 10)->setText(string.number(frame->time_stamp / 1000.0, 'g', 10));
 
-            rx_parse_model->item(temp_element->flag, 11)->setText(string.number(frame->delta_time_stamp / 1000.0, 'g', 10));
+            rx_parse_window.model->item(temp_element->flag, 11)->setText(string.number(frame->delta_time_stamp / 1000.0, 'g', 10));
 
-            rx_parse_table->setRowHeight(temp_element->flag, 20);
+            rx_parse_window.table->setRowHeight(temp_element->flag, 20);
         }
         else
         {}
@@ -125,142 +169,136 @@ void Spark::update_rx_parse_line(const struct can_bus_frame_t *frame)
 
 void Spark::update_receive_message_window()
 {
-    U16 msgs_index = 0;
-    QStandardItem *newItem;
+    U32 index = 0;
     const struct can_bus_frame_t *can_frame;
     struct can_bus_frame_t *temp_element;
     QString string;
-    U32 format = rx_dec_display == TRUE ? 10 : 16;
+    U32 format = rx.dec_display == TRUE ? 10 : 16;
+    U32 half_bytes = rx.dec_display == TRUE ? 0 : 2;
 
-    if(fixed_posions == TRUE)
-    {
-        //rx_window_model->removeRow();
-    }
+    if(rx.fixed_posions == TRUE)
+    {}
     for(can_frame = mid_can_new_frame();
-        rx_window_refresh == TRUE && can_frame != NULL;
+        rx.refresh == TRUE && can_frame != NULL;
         can_frame = mid_can_new_frame())
     {
-        if(rx_accept_id != 0
-                && can_frame->id != rx_accept_id)
+        if(rx.accept_id != 0
+                && can_frame->id != rx.accept_id)
         {
             continue;
         }
-        if(rx_reject_id != 0
-                && can_frame->id == rx_reject_id)
+        if(rx.reject_id != 0
+                && can_frame->id == rx.reject_id)
         {
             continue;
         }
-        for(msgs_index = 0; msgs_index < RX_LISTS_MAX; msgs_index ++)
+        for(index = 0; index < RX_LISTS_MAX; index ++)
         {
-            if(msgs[msgs_index].mutex_val == can_frame->id)
+            if(rx.locate[index].mutex == can_frame->id)
             {
                 break;
             }
-            if(msgs[msgs_index].mutex_val == (long)U32_INVALID_VALUE)
+            else if(rx.locate[index].mutex == (long)U32_INVALID_VALUE)
             {
-                msgs[msgs_index].mutex_val = can_frame->id;
-                msgs[msgs_index].line_num = msgs_index;
-                for(int index = 0; index < RX_WINDOW_ITEMS; index ++)
-                {
-                    newItem = new QStandardItem;
-                    newItem->setTextAlignment(Qt::AlignCenter);
-                    rx_window_model->setItem(msgs_index, index, newItem);
-                }
+                rx.locate[index].mutex = can_frame->id;
+                rx.locate[index].line = index;
+                operate_table_line(&rx.window, 1, index);
+
                 break;
             }
         }
 
-        string = QString("%1").arg(msgs[msgs_index].line_num, 10, 10, QLatin1Char('0'));
-        rx_window_model->item(msgs[msgs_index].line_num, 0)->setText(string);
+        string = QString("%1").arg(rx.locate[index].line, 10, 10, QLatin1Char('0'));
+        rx.window.model->item(rx.locate[index].line, 0)->setText(string);
 
-        rx_window_model->item(msgs[msgs_index].line_num, 1)->setText(string.number(can_frame->chn, 10));
+        rx.window.model->item(rx.locate[index].line, 1)->setText(string.number(can_frame->chn, 10));
 
         string = QString("%1").arg(can_frame->id, 8, 16, QLatin1Char('0')).toUpper();
-        rx_window_model->item(msgs[msgs_index].line_num, 2)->setText(string);
+        rx.window.model->item(rx.locate[index].line, 2)->setText(string);
 
-        rx_window_model->item(msgs[msgs_index].line_num, 3)->setText(string.number(can_frame->flag, 10));
+        rx.window.model->item(rx.locate[index].line, 3)->setText(string.number(can_frame->flag, 10));
 
-        rx_window_model->item(msgs[msgs_index].line_num, 4)->setText(string.number(can_frame->dlc, 10));
+        rx.window.model->item(rx.locate[index].line, 4)->setText(string.number(can_frame->dlc, 10));
 
-        string = QString("%1").arg(can_frame->buf[0], 2, format, QLatin1Char('0')).toUpper();
-        rx_window_model->item(msgs[msgs_index].line_num, 5)->setText(string);
+        string = QString("%1").arg(can_frame->buf[0], half_bytes, format, QLatin1Char('0')).toUpper();
+        rx.window.model->item(rx.locate[index].line, 5)->setText(string);
 
-        string = QString("%1").arg(can_frame->buf[1], 2, format, QLatin1Char('0')).toUpper();
-        rx_window_model->item(msgs[msgs_index].line_num, 6)->setText(string);
+        string = QString("%1").arg(can_frame->buf[1], half_bytes, format, QLatin1Char('0')).toUpper();
+        rx.window.model->item(rx.locate[index].line, 6)->setText(string);
 
-        string = QString("%1").arg(can_frame->buf[2], 2, format, QLatin1Char('0')).toUpper();
-        rx_window_model->item(msgs[msgs_index].line_num, 7)->setText(string);
+        string = QString("%1").arg(can_frame->buf[2], half_bytes, format, QLatin1Char('0')).toUpper();
+        rx.window.model->item(rx.locate[index].line, 7)->setText(string);
 
-        string = QString("%1").arg(can_frame->buf[3], 2, format, QLatin1Char('0')).toUpper();
-        rx_window_model->item(msgs[msgs_index].line_num, 8)->setText(string);
+        string = QString("%1").arg(can_frame->buf[3], half_bytes, format, QLatin1Char('0')).toUpper();
+        rx.window.model->item(rx.locate[index].line, 8)->setText(string);
 
-        string = QString("%1").arg(can_frame->buf[4], 2, format, QLatin1Char('0')).toUpper();
-        rx_window_model->item(msgs[msgs_index].line_num, 9)->setText(string);
+        string = QString("%1").arg(can_frame->buf[4], half_bytes, format, QLatin1Char('0')).toUpper();
+        rx.window.model->item(rx.locate[index].line, 9)->setText(string);
 
-        string = QString("%1").arg(can_frame->buf[5], 2, format, QLatin1Char('0')).toUpper();
-        rx_window_model->item(msgs[msgs_index].line_num, 10)->setText(string);
+        string = QString("%1").arg(can_frame->buf[5], half_bytes, format, QLatin1Char('0')).toUpper();
+        rx.window.model->item(rx.locate[index].line, 10)->setText(string);
 
-        string = QString("%1").arg(can_frame->buf[6], 2, format, QLatin1Char('0')).toUpper();
-        rx_window_model->item(msgs[msgs_index].line_num, 11)->setText(string);
+        string = QString("%1").arg(can_frame->buf[6], half_bytes, format, QLatin1Char('0')).toUpper();
+        rx.window.model->item(rx.locate[index].line, 11)->setText(string);
 
-        string = QString("%1").arg(can_frame->buf[7], 2, format, QLatin1Char('0')).toUpper();
-        rx_window_model->item(msgs[msgs_index].line_num, 12)->setText(string);
+        string = QString("%1").arg(can_frame->buf[7], half_bytes, format, QLatin1Char('0')).toUpper();
+        rx.window.model->item(rx.locate[index].line, 12)->setText(string);
 
-        rx_window_model->item(msgs[msgs_index].line_num, 13)->setText(string.number(can_frame->time_stamp / 1000.0, 'g', 10));
+        rx.window.model->item(rx.locate[index].line, 13)->setText(string.number(can_frame->time_stamp / 1000.0, 'g', 10));
 
-        rx_window_model->item(msgs[msgs_index].line_num, 14)->setText(string.number(can_frame->delta_time_stamp / 1000.0, 'g', 10));
-        rx_window_table->setRowHeight(msgs[msgs_index].line_num, 20);
-        rx_window_table->currentIndex();
+        rx.window.model->item(rx.locate[index].line, 14)->setText(string.number(can_frame->delta_time_stamp / 1000.0, 'g', 10));
+        rx.window.table->setRowHeight(rx.locate[index].line, 20);
+        rx.window.table->currentIndex();
         update_rx_parse_line(can_frame);
     }
-    msgs_index = 0;
-    for(struct list_item_t *list = can_tx_list->ended.next; list != &can_tx_list->ended; list = list->next)
+    index = 0;
+    for(struct list_item_t *list = tx.list->ended.next; list != &tx.list->ended; list = list->next)
     {
         temp_element = (struct can_bus_frame_t *)list->data;
 
         {
-            string = QString("%1").arg(msgs_index, 10, 10, QLatin1Char('0'));
-            tx_window_model->item(msgs_index, 0)->setText(string);
+            string = QString("%1").arg(index, 10, 10, QLatin1Char('0'));
+            tx.window.model->item(index, 0)->setText(string);
 
-            tx_window_model->item(msgs_index, 1)->setText(string.number(temp_element->chn, 10));
+            tx.window.model->item(index, 1)->setText(string.number(temp_element->chn, 10));
 
             string = QString("%1").arg(temp_element->id, 8, 16, QLatin1Char('0')).toUpper();
-            tx_window_model->item(msgs_index, 2)->setText(string);
+            tx.window.model->item(index, 2)->setText(string);
 
-            tx_window_model->item(msgs_index, 3)->setText(string.number(temp_element->flag, 10));
+            tx.window.model->item(index, 3)->setText(string.number(temp_element->flag, 10));
 
-            tx_window_model->item(msgs_index, 4)->setText(string.number(temp_element->dlc, 10));
+            tx.window.model->item(index, 4)->setText(string.number(temp_element->dlc, 10));
 
             string = QString("%1").arg(temp_element->buf[0], 2, format, QLatin1Char('0')).toUpper();
-            tx_window_model->item(msgs_index, 5)->setText(string);
+            tx.window.model->item(index, 5)->setText(string);
 
             string = QString("%1").arg(temp_element->buf[1], 2, format, QLatin1Char('0')).toUpper();
-            tx_window_model->item(msgs_index, 6)->setText(string);
+            tx.window.model->item(index, 6)->setText(string);
 
             string = QString("%1").arg(temp_element->buf[2], 2, format, QLatin1Char('0')).toUpper();
-            tx_window_model->item(msgs_index, 7)->setText(string);
+            tx.window.model->item(index, 7)->setText(string);
 
             string = QString("%1").arg(temp_element->buf[3], 2, format, QLatin1Char('0')).toUpper();
-            tx_window_model->item(msgs_index, 8)->setText(string);
+            tx.window.model->item(index, 8)->setText(string);
 
             string = QString("%1").arg(temp_element->buf[4], 2, format, QLatin1Char('0')).toUpper();
-            tx_window_model->item(msgs_index, 9)->setText(string);
+            tx.window.model->item(index, 9)->setText(string);
 
             string = QString("%1").arg(temp_element->buf[5], 2, format, QLatin1Char('0')).toUpper();
-            tx_window_model->item(msgs_index, 10)->setText(string);
+            tx.window.model->item(index, 10)->setText(string);
 
             string = QString("%1").arg(temp_element->buf[6], 2, format, QLatin1Char('0')).toUpper();
-            tx_window_model->item(msgs_index, 11)->setText(string);
+            tx.window.model->item(index, 11)->setText(string);
 
             string = QString("%1").arg(temp_element->buf[7], 2, format, QLatin1Char('0')).toUpper();
-            tx_window_model->item(msgs_index, 12)->setText(string);
+            tx.window.model->item(index, 12)->setText(string);
 
-            tx_window_model->item(msgs_index, 13)->setText(string.number(temp_element->time_stamp / 1000.0, 'g', 10));
+            tx.window.model->item(index, 13)->setText(string.number(temp_element->time_stamp / 1000.0, 'g', 10));
 
-            tx_window_model->item(msgs_index, 14)->setText(string.number(temp_element->delta_time_stamp / 1000.0, 'g', 10));
-            tx_window_table->setRowHeight(msgs_index, 20);
-            tx_window_table->currentIndex();
-            msgs_index ++;
+            tx.window.model->item(index, 14)->setText(string.number(temp_element->delta_time_stamp / 1000.0, 'g', 10));
+            tx.window.table->setRowHeight(index, 20);
+            tx.window.table->currentIndex();
+            index ++;
         }
     }
 }
@@ -279,86 +317,73 @@ void Spark::main_window_update()
     update_receive_message_window();
 }
 
-void Spark::init_rx_window_table()
+void Spark::init_dock_window(struct tabel_dock_t *config,
+                            QString window_name,
+                            int window_width,
+                            int window_height,
+                            QString table_head,
+                            int table_columns,
+                            int *column_width)
 {
-    QString ended_name = "Rx Chn Identifer Flag DLC D0 D1 D2 D3 D4 D5 D6 D7 Time-Stamp Delta-Stamp";
-    QStringList list = ended_name.simplified().split(" ");
-
-    rx_window_table = new QTableView(this);
-    rx_window_table->verticalHeader()->hide();
-    rx_window_model = new QStandardItemModel();
-    rx_window_model->setHorizontalHeaderLabels(list);
-    rx_window_table->setModel(rx_window_model);
-    rx_window_table->setRowHeight(0, 20);
-    rx_window_table->setColumnWidth(0, 90);    //Rx
-    rx_window_table->setColumnWidth(1, 30);    //Chn
-    rx_window_table->setColumnWidth(2, 70);    //Identifer
-    rx_window_table->setColumnWidth(3, 30);    //Flag
-    rx_window_table->setColumnWidth(4, 30);    //DLC
-    rx_window_table->setColumnWidth(5, 30);    //D0
-    rx_window_table->setColumnWidth(6, 30);    //D1
-    rx_window_table->setColumnWidth(7, 30);    //D2
-    rx_window_table->setColumnWidth(8, 30);    //D3
-    rx_window_table->setColumnWidth(9, 30);    //D4
-    rx_window_table->setColumnWidth(10, 30);   //D5
-    rx_window_table->setColumnWidth(11, 30);   //D6
-    rx_window_table->setColumnWidth(12, 30);   //D7
-    rx_window_table->setColumnWidth(13, 80);	//Time-Stamp
-    rx_window_table->setColumnWidth(14, 80);	//Delta-Stamp
-    rx_window_table->show();
+    config->table = NULL;
+    config->model = NULL;
+    config->window_name = window_name;
+    config->window_width = window_width;
+    config->window_height = window_height;
+    config->table_head = table_head;
+    config->table_columns = table_columns;
+    memcpy(config->column_width,
+            column_width,
+            sizeof(config->column_width[0]) * config->table_columns);
 }
 
-void Spark::creat_rx_dock_window()
+void Spark::init_dock_table(tabel_dock_t *config)
 {
+    QStringList list = config->table_head.simplified().split(" ");
 
-    QDockWidget *dock = new QDockWidget(tr("Receive Messages"), this);
+    config->table = new QTableView(this);
+    config->table->verticalHeader()->hide();
+    config->model = new QStandardItemModel();
+    config->model->setHorizontalHeaderLabels(list);
+    config->table->setModel(config->model);
+    config->table->setRowHeight(0, 20);
+    for(int index = 0; index < config->table_columns; index ++)
+    {
+        config->table->setColumnWidth(index, config->column_width[index]);
+    }
+    config->table->show();
+}
+
+void Spark::creat_dock_window(struct tabel_dock_t *config)
+{
+    QDockWidget *dock = new QDockWidget(config->window_name, this);
     dock->setAllowedAreas(Qt::RightDockWidgetArea);
-    dock->setMinimumWidth(700);
-    dock->setMinimumHeight(200);
+    dock->setMinimumWidth(config->window_width);
+    dock->setMinimumHeight(config->window_height);
     dock->setFloating(TRUE);
-    init_rx_window_table();
-    dock->setWidget(rx_window_table);
+    init_dock_table(config);
+    dock->setWidget(config->table);
 
     addDockWidget(Qt::RightDockWidgetArea, dock);
 }
 
-void Spark::init_rx_parse_table()
+void Spark::operate_table_line(struct tabel_dock_t *window, int operate, U32 lines)
 {
-    QString ended_name = "Name Identifer Start-Bit Bit-Length Factor Offset Mot MSB Row Phy Time-Stamp Delta-Stamp";
-    QStringList list = ended_name.simplified().split(" ");
+    QStandardItem *item;
 
-    rx_parse_table = new QTableView(this);
-    rx_parse_table->verticalHeader()->hide();
-    rx_parse_model = new QStandardItemModel();
-    rx_parse_model->setHorizontalHeaderLabels(list);
-    rx_parse_table->setModel(rx_parse_model);
-    rx_parse_table->setRowHeight(0, 20);
-    rx_parse_table->setColumnWidth(0, 80);    //Name
-    rx_parse_table->setColumnWidth(1, 60);    //Identifer
-    rx_parse_table->setColumnWidth(2, 60);    //Start-Bit
-    rx_parse_table->setColumnWidth(3, 65);    //Bit-Length
-    rx_parse_table->setColumnWidth(4, 40);    //Factor
-    rx_parse_table->setColumnWidth(5, 40);    //Offset
-    rx_parse_table->setColumnWidth(6, 30);    //Byte Order
-    rx_parse_table->setColumnWidth(7, 30);    //Bits Order
-    rx_parse_table->setColumnWidth(8, 40);    //Row
-    rx_parse_table->setColumnWidth(9, 80);    //Phy
-    rx_parse_table->setColumnWidth(10, 80);    //Time-Stamp;
-    rx_parse_table->setColumnWidth(11, 80);    //Delta-Stamp;
-    rx_parse_table->show();
-}
-
-void Spark::creat_rx_parse_window()
-{
-    QDockWidget *dock = new QDockWidget(tr("Rx Parse Window"), this);
-    dock->setAllowedAreas(Qt::RightDockWidgetArea);
-    dock->setMinimumWidth(700);
-    dock->setMinimumHeight(200);
-    dock->setFloating(TRUE);
-    init_rx_parse_table();
-    dock->setWidget(rx_parse_table);
-
-    addDockWidget(Qt::RightDockWidgetArea, dock);
+    if(operate == 1)
+    {
+        for(int index = 0; index < window->table_columns; index ++)
+        {
+            item = new QStandardItem;
+            item->setTextAlignment(Qt::AlignCenter);
+            window->model->setItem(lines, index, item);
+        }
+    }
+    else if(operate == -1)
+    {
+        window->model->removeRow(lines);
+    }
 }
 
 void Spark::on_comboBox_currentIndexChanged(int index)
@@ -449,19 +474,19 @@ void Spark::on_pushButton_9_clicked()
 
 void Spark::on_pushButton_4_clicked()
 {
-    if(rx_window_table == NULL)
+    if(rx.window.table == NULL)
     {
-        creat_rx_dock_window();
+        creat_dock_window(&rx.window);
     }
 
-    if(rx_window_refresh == TRUE)
+    if(rx.refresh == TRUE)
     {
-        rx_window_refresh = FALSE;
+        rx.refresh = FALSE;
         ui->pushButton_4->setText("Start");
     }
     else
     {
-        rx_window_refresh = TRUE;
+        rx.refresh = TRUE;
         ui->pushButton_4->setText("Stop");
     }
 }
@@ -527,15 +552,15 @@ void Spark::on_pushButton_7_clicked()
     {
         return;
     }
-    if(rx_parse_table == NULL)
+    if(rx_parse_window.table == NULL)
     {
-        creat_rx_parse_window();
+        creat_dock_window(&rx_parse_window);
     }
     for(int index = 0; index < RX_PARSE_ITEMS; index ++)
     {
         newItem = new QStandardItem;
         newItem->setTextAlignment(Qt::AlignCenter);
-        rx_parse_model->setItem(rx_parse->object, index, newItem);
+        rx_parse_window.model->setItem(rx_parse->object, index, newItem);
     }
     list_insert(rx_parse->list, rx_parse->object);
     element = (struct mid_data_config_t *)list_find_entity(rx_parse->list, rx_parse->object);
@@ -549,7 +574,7 @@ void Spark::on_lineEdit_12_textEdited(const QString &arg1)
 {
     bool ok;
 
-    rx_accept_id = arg1.toInt(&ok, 16);
+    rx.accept_id = arg1.toInt(&ok, 16);
 }
 
 // reject id
@@ -557,42 +582,41 @@ void Spark::on_lineEdit_13_textEdited(const QString &arg1)
 {
     bool ok;
 
-    rx_reject_id = arg1.toInt(&ok, 16);
+    rx.reject_id = arg1.toInt(&ok, 16);
 }
 
 void Spark::on_checkBox_clicked(bool checked)
 {
-    fixed_posions = checked;
+    rx.fixed_posions = checked;
 }
 
 // rx dec display
 void Spark::on_checkBox_2_clicked(bool checked)
 {
-    rx_dec_display = checked;
+    rx.dec_display = checked;
 }
 
 // Clear rx Window
 void Spark::on_pushButton_10_clicked()
 {
-    U32 msgs_index;
-
-    if(rx_window_model != NULL)
+    if(rx.window.model == NULL)
     {
-        for(msgs_index = 0; msgs_index < RX_LISTS_MAX; msgs_index ++)
+        return;
+    }
+    for(U32 index = 0; index < RX_LISTS_MAX; index ++)
+    {
+        if(rx.locate[index].mutex != (long)U32_INVALID_VALUE)
         {
-            if(msgs[msgs_index].mutex_val != (long)U32_INVALID_VALUE)
-            {
-                rx_window_model->removeRow(msgs[msgs_index].line_num);
-                msgs[msgs_index].mutex_val = U32_INVALID_VALUE;
-            }
-            else
-            {
-                break;
-            }
+            operate_table_line(&rx.window, -1, 0);
+            rx.locate[index].line = 0;
+            rx.locate[index].mutex = U32_INVALID_VALUE;
+        }
+        else
+        {
+            break;
         }
     }
 
-    memset(msgs, U32_INVALID_VALUE, sizeof(msgs[0]) * RX_LISTS_MAX);
 }
 
 // tx id
@@ -600,7 +624,7 @@ void Spark::on_lineEdit_textEdited(const QString &arg1)
 {
     bool ok;
 
-    tx_msg_config.id = arg1.toInt(&ok, 16);
+    tx.msg_config.id = arg1.toInt(&ok, 16);
 }
 
 // tx dlc
@@ -608,7 +632,7 @@ void Spark::on_lineEdit_2_textEdited(const QString &arg1)
 {
     bool ok;
 
-    tx_msg_config.dlc = arg1.toInt(&ok, 10);
+    tx.msg_config.dlc = arg1.toInt(&ok, 10);
 }
 
 // tx interval
@@ -616,7 +640,7 @@ void Spark::on_lineEdit_3_textEdited(const QString &arg1)
 {
     bool ok;
 
-    tx_msg_config.config_delta_time_stamp = arg1.toInt(&ok, 10);
+    tx.msg_config.config_delta_time_stamp = arg1.toInt(&ok, 10);
 }
 
 // tx Byte0
@@ -624,7 +648,7 @@ void Spark::on_lineEdit_4_textEdited(const QString &arg1)
 {
     bool ok;
 
-    tx_msg_config.buf[0] = arg1.toInt(&ok, 16);
+    tx.msg_config.buf[0] = arg1.toInt(&ok, 16);
 }
 
 // tx Byte1
@@ -632,7 +656,7 @@ void Spark::on_lineEdit_5_textEdited(const QString &arg1)
 {
     bool ok;
 
-    tx_msg_config.buf[1] = arg1.toInt(&ok, 16);
+    tx.msg_config.buf[1] = arg1.toInt(&ok, 16);
 }
 
 // tx Byte2
@@ -640,7 +664,7 @@ void Spark::on_lineEdit_7_textEdited(const QString &arg1)
 {
     bool ok;
 
-    tx_msg_config.buf[2] = arg1.toInt(&ok, 16);
+    tx.msg_config.buf[2] = arg1.toInt(&ok, 16);
 }
 
 // tx Byte3
@@ -648,7 +672,7 @@ void Spark::on_lineEdit_6_textEdited(const QString &arg1)
 {
     bool ok;
 
-    tx_msg_config.buf[3] = arg1.toInt(&ok, 16);
+    tx.msg_config.buf[3] = arg1.toInt(&ok, 16);
 }
 
 // tx Byte4
@@ -656,7 +680,7 @@ void Spark::on_lineEdit_10_textEdited(const QString &arg1)
 {
     bool ok;
 
-    tx_msg_config.buf[4] = arg1.toInt(&ok, 16);
+    tx.msg_config.buf[4] = arg1.toInt(&ok, 16);
 }
 
 // tx Byte5
@@ -664,7 +688,7 @@ void Spark::on_lineEdit_8_textEdited(const QString &arg1)
 {
     bool ok;
 
-    tx_msg_config.buf[5] = arg1.toInt(&ok, 16);
+    tx.msg_config.buf[5] = arg1.toInt(&ok, 16);
 }
 
 // tx Byte6
@@ -672,7 +696,7 @@ void Spark::on_lineEdit_11_textEdited(const QString &arg1)
 {
     bool ok;
 
-    tx_msg_config.buf[6] = arg1.toInt(&ok, 16);
+    tx.msg_config.buf[6] = arg1.toInt(&ok, 16);
 }
 
 // tx Byte7
@@ -680,71 +704,33 @@ void Spark::on_lineEdit_9_textEdited(const QString &arg1)
 {
     bool ok;
 
-    tx_msg_config.buf[7] = arg1.toInt(&ok, 16);
-}
-
-void Spark::init_tx_table()
-{
-    QString ended_name = "Tx Chn Identifer Flag DLC D0 D1 D2 D3 D4 D5 D6 D7 Time-Stamp Delta-Stamp";
-    QStringList list = ended_name.simplified().split(" ");
-
-    tx_window_table = new QTableView(this);
-    tx_window_table->verticalHeader()->hide();
-    tx_window_model = new QStandardItemModel();
-    tx_window_model->setHorizontalHeaderLabels(list);
-    tx_window_table->setModel(tx_window_model);
-    tx_window_table->setRowHeight(0, 20);
-    tx_window_table->setColumnWidth(0, 90);    //Tx
-    tx_window_table->setColumnWidth(1, 30);    //Chn
-    tx_window_table->setColumnWidth(2, 70);    //Identifer
-    tx_window_table->setColumnWidth(3, 30);    //Flag
-    tx_window_table->setColumnWidth(4, 30);    //DLC
-    tx_window_table->setColumnWidth(5, 30);    //D0
-    tx_window_table->setColumnWidth(6, 30);    //D1
-    tx_window_table->setColumnWidth(7, 30);    //D2
-    tx_window_table->setColumnWidth(8, 30);    //D3
-    tx_window_table->setColumnWidth(9, 30);    //D4
-    tx_window_table->setColumnWidth(10, 30);   //D5
-    tx_window_table->setColumnWidth(11, 30);   //D6
-    tx_window_table->setColumnWidth(12, 30);   //D7
-    tx_window_table->setColumnWidth(13, 80);	//Time-Stamp
-    tx_window_table->setColumnWidth(14, 80);	//Delta-Stamp
-    tx_window_table->show();
-}
-
-void Spark::creat_tx_window()
-{
-    QDockWidget *dock = new QDockWidget(tr("Tx Window"), this);
-    dock->setAllowedAreas(Qt::RightDockWidgetArea);
-    dock->setMinimumWidth(700);
-    dock->setMinimumHeight(200);
-    dock->setFloating(TRUE);
-    init_tx_table();
-    dock->setWidget(tx_window_table);
-
-    addDockWidget(Qt::RightDockWidgetArea, dock);
+    tx.msg_config.buf[7] = arg1.toInt(&ok, 16);
 }
 
 // tx window clear
 void Spark::on_pushButton_11_clicked()
 {
-    can_tx_list->destory_all_items(can_tx_list);
-
-    for(; tx_msgs_lines != 0; tx_msgs_lines --)
+    if(tx.msgs == 0)
     {
-        tx_window_model->removeRow(tx_msgs_lines - 1);
+        return;
     }
+    tx.list->destory_all_items(tx.list);
+    do
+    {
+        tx.msgs --;
+        operate_table_line(&tx.window, -1, tx.msgs);
+    } while(tx.msgs != 0);
 }
 
 // tx delete id
 void Spark::on_pushButton_12_clicked()
 {
-    struct list_item_t *rm_item = (struct list_item_t *)list_find_entity(can_tx_list, tx_msg_config.id);
+    struct list_item_t *rm_item = (struct list_item_t *)list_find_entity(tx.list, tx.msg_config.id);
     if(rm_item != NULL)
     {
-        can_tx_list->destory_item(can_tx_list, tx_msg_config.id);
-        tx_msgs_lines --;
-        tx_window_model->removeRow(tx_msgs_lines);
+        tx.list->destory_item(tx.list, tx.msg_config.id);
+        tx.msgs --;
+        operate_table_line(&tx.window, -1, tx.msgs);
     }
 }
 
@@ -754,50 +740,50 @@ void Spark::on_pushButton_3_clicked()
     struct can_bus_frame_t *temp_element;
     QStandardItem *newItem;
 
-    if(tx_msg_config.config_delta_time_stamp == 0 || tx_msg_config.id == 0)
+    if(tx.msg_config.config_delta_time_stamp == 0 || tx.msg_config.id == 0)
     {
         return;
     }
-    if(can_tx_list == 0)
+    if(tx.list == 0)
     {
         return;
     }
-    if(tx_window_table == NULL)
+    if(tx.window.table == NULL)
     {
-        creat_tx_window();
+        creat_dock_window(&tx.window);
     }
-    if(list_find_entity(can_tx_list, tx_msg_config.id) != NULL)
+    if(list_find_entity(tx.list, tx.msg_config.id) != NULL)
     {
         return;
     }
-    list_insert(can_tx_list, tx_msg_config.id);
-    temp_element = (struct can_bus_frame_t *)list_find_entity(can_tx_list, tx_msg_config.id);
+    list_insert(tx.list, tx.msg_config.id);
+    temp_element = (struct can_bus_frame_t *)list_find_entity(tx.list, tx.msg_config.id);
 
     if(temp_element == NULL)
     {
         return;
     }
-    if(tx_msg_config.id > 0x7FF)
+    if(tx.msg_config.id > 0x7FF)
     {
-        tx_msg_config.flag = canMSG_EXT;
+        tx.msg_config.flag = canMSG_EXT;
     }
     else
     {
-        tx_msg_config.flag = canMSG_STD;
+        tx.msg_config.flag = canMSG_STD;
     }
-    tx_msg_config.new_data = 0;
+    tx.msg_config.new_data = 0;
 
-    tx_msg_config.time_stamp = 0;
-    tx_msg_config.squ = 0;
-    memcpy(temp_element, &tx_msg_config, sizeof(*temp_element));
+    tx.msg_config.time_stamp = 0;
+    tx.msg_config.squ = 0;
+    memcpy(temp_element, &tx.msg_config, sizeof(*temp_element));
 
     for(int index = 0; index < TX_WINDOW_ITEMS; index ++)
     {
         newItem = new QStandardItem;
         newItem->setTextAlignment(Qt::AlignCenter);
-        tx_window_model->setItem(tx_msgs_lines, index, newItem);
+        tx.window.model->setItem(tx.msgs, index, newItem);
     }
-    tx_msgs_lines ++;
+    tx.msgs ++;
 }
 
 // tx parse id
@@ -805,7 +791,7 @@ void Spark::on_lineEdit_14_textEdited(const QString &arg1)
 {
     bool ok;
 
-    tx_parse->setting.id = arg1.toInt(&ok, 16);
+    tx.parse->setting.id = arg1.toInt(&ok, 16);
 }
 
 // tx parse start-bit
@@ -813,7 +799,7 @@ void Spark::on_lineEdit_15_textEdited(const QString &arg1)
 {
     bool ok;
 
-    tx_parse->setting.start_bit = arg1.toInt(&ok, 10);
+    tx.parse->setting.start_bit = arg1.toInt(&ok, 10);
 }
 
 // tx parse bits-length
@@ -821,37 +807,37 @@ void Spark::on_lineEdit_16_textEdited(const QString &arg1)
 {
     bool ok;
 
-    tx_parse->setting.bits_length = arg1.toInt(&ok, 10);
+    tx.parse->setting.bits_length = arg1.toInt(&ok, 10);
 }
 
 // tx parse factor
 void Spark::on_lineEdit_17_textEdited(const QString &arg1)
 {
-    tx_parse->setting.factor = arg1.toFloat();
+    tx.parse->setting.factor = arg1.toFloat();
 }
 
 // tx parse offset
 void Spark::on_lineEdit_18_textEdited(const QString &arg1)
 {
-    tx_parse->setting.offset = arg1.toFloat();
+    tx.parse->setting.offset = arg1.toFloat();
 }
 
 // tx parse value
 void Spark::on_lineEdit_24_textEdited(const QString &arg1)
 {
-    tx_parse->setting.phy = arg1.toFloat();
+    tx.parse->setting.phy = arg1.toFloat();
 }
 
 // tx parse byte order 1:motorolar 0:intel
 void Spark::on_checkBox_5_clicked(bool checked)
 {
-    tx_parse->setting.bytes_order = checked;
+    tx.parse->setting.bytes_order = checked;
 }
 
 // tx parse bit order 1:msb 0:lsb
 void Spark::on_checkBox_6_clicked(bool checked)
 {
-    tx_parse->setting.bits_order = checked;
+    tx.parse->setting.bits_order = checked;
 }
 
 // tx parse start
@@ -860,16 +846,16 @@ void Spark::on_pushButton_6_clicked()
     struct can_bus_frame_t *temp_element;
     float temp_float;
 
-    temp_element = (struct can_bus_frame_t *)list_find_entity(can_tx_list, tx_parse->setting.id);
+    temp_element = (struct can_bus_frame_t *)list_find_entity(tx.list, tx.parse->setting.id);
     if(temp_element == NULL)
     {
         return;
     }
-    temp_float = (tx_parse->setting.phy - tx_parse->setting.offset) / tx_parse->setting.factor;
+    temp_float = (tx.parse->setting.phy - tx.parse->setting.offset) / tx.parse->setting.factor;
     data_pack(temp_element->buf,
                 temp_float + 0.5,
-				tx_parse->setting.bytes_order,
-				tx_parse->setting.bits_order,
-				tx_parse->setting.start_bit,
-				tx_parse->setting.bits_length);
+                tx.parse->setting.bytes_order,
+                tx.parse->setting.bits_order,
+                tx.parse->setting.start_bit,
+                tx.parse->setting.bits_length);
 }

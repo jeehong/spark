@@ -17,7 +17,7 @@ int bits_pack(unsigned char *dest,
 {
     unsigned int old_value = 0;
     unsigned char byte_start,offset;
-    unsigned int i;
+    int i;
 	int sign_flag = 1;	/* default intel order */
 
     if(dest == NULL)
@@ -68,7 +68,7 @@ int bits_pick(unsigned int *dest,
 {
     unsigned char offset;
     unsigned char byte_start;
-    unsigned int i;
+    int i;
     unsigned int result;
 	int sign_flag = 1;	/* default intel order */
 
