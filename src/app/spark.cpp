@@ -19,6 +19,7 @@ Spark::Spark(QMainWindow *parent) :
     ui(new Ui::Spark)
 {
     ui->setupUi(this);
+    ui->pushButton_2->setEnabled(FALSE);
 
     // rx_window
     int rx_window_column_width[RX_WINDOW_ITEMS] =
@@ -426,16 +427,16 @@ void Spark::on_comboBox_2_activated(int index)
 {
     switch(index)
     {
-        case 0: mid_can_set_baudrate(1000000); break;
-        case 1: mid_can_set_baudrate(500000); break;
-        case 2: mid_can_set_baudrate(250000); break;
-        case 3: mid_can_set_baudrate(125000); break;
-        case 4: mid_can_set_baudrate(100000); break;
-        case 5: mid_can_set_baudrate(83000); break;
-        case 6: mid_can_set_baudrate(62000); break;
-        case 7: mid_can_set_baudrate(50000); break;
-        case 8: mid_can_set_baudrate(10000); break;
-        default: mid_can_set_baudrate(CAN_BAUDRATE_DEFAULT); break;
+        case 0: mid_can_set_baudrate(canBITRATE_1M); break;
+        case 1: mid_can_set_baudrate(canBITRATE_500K); break;
+        case 2: mid_can_set_baudrate(canBITRATE_250K); break;
+        case 3: mid_can_set_baudrate(canBITRATE_125K); break;
+        case 4: mid_can_set_baudrate(canBITRATE_100K); break;
+        case 5: mid_can_set_baudrate(canBITRATE_83K); break;
+        case 6: mid_can_set_baudrate(canBITRATE_62K); break;
+        case 7: mid_can_set_baudrate(canBITRATE_50K); break;
+        case 8: mid_can_set_baudrate(canBITRATE_10K); break;
+        default: mid_can_set_baudrate(canBITRATE_500K); break;
     }
 }
 
@@ -448,18 +449,12 @@ void Spark::on_pushButton_2_clicked()
 {
     if(mid_can_on_off() == TRUE)
     {
-        ui->comboBox->setEnabled(FALSE);
-        ui->comboBox_2->setEnabled(FALSE);
-        ui->pushButton_8->setEnabled(FALSE);
         ui->pushButton_9->setEnabled(FALSE);
         ui->pushButton_2->setText("Bus Off");
         uiTimer.start();
     }
     else
     {
-        ui->comboBox->setEnabled(TRUE);
-        ui->comboBox_2->setEnabled(TRUE);
-        ui->pushButton_8->setEnabled(TRUE);
         ui->pushButton_9->setEnabled(TRUE);
         ui->pushButton_2->setText("Bus On");
         uiTimer.stop();
@@ -469,7 +464,22 @@ void Spark::on_pushButton_2_clicked()
 // setting apply
 void Spark::on_pushButton_9_clicked()
 {
-    mid_can_apply_cfg();
+    if(mid_can_apply_cfg() == TRUE)
+    {
+        ui->comboBox->setEnabled(FALSE);
+        ui->comboBox_2->setEnabled(FALSE);
+        ui->pushButton_8->setEnabled(FALSE);
+        ui->pushButton_2->setEnabled(TRUE);
+        ui->pushButton_9->setText("Disconnect");
+    }
+    else
+    {
+        ui->comboBox->setEnabled(TRUE);
+        ui->comboBox_2->setEnabled(TRUE);
+        ui->pushButton_8->setEnabled(TRUE);
+        ui->pushButton_2->setEnabled(FALSE);
+        ui->pushButton_9->setText("Connect");
+    }
 }
 
 void Spark::on_pushButton_4_clicked()
@@ -481,11 +491,13 @@ void Spark::on_pushButton_4_clicked()
 
     if(rx.refresh == TRUE)
     {
+        mid_can_bus_output(OFF);
         rx.refresh = FALSE;
         ui->pushButton_4->setText("Start");
     }
     else
     {
+        mid_can_bus_output(ON);
         rx.refresh = TRUE;
         ui->pushButton_4->setText("Stop");
     }

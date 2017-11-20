@@ -9,7 +9,7 @@
 #define CAN_SPPPORT_CHANNELS    (20)
 #define CAN_CHANNEL_INFO_LENGTH (255)
 
-#define	CAN_BAUDRATE_DEFAULT	(500000)
+#define	CAN_BAUDRATE_DEFAULT	(canBITRATE_500K)
 
 #define MAX_DLC		(8)
 
@@ -38,8 +38,9 @@ unsigned int mid_can_get_channels(void);
 const char *mid_can_get_channel_info(unsigned int channel);
 void mid_can_set_channel(unsigned int channel);
 int mid_can_on_off(void);
-void mid_can_set_baudrate(unsigned int baudrate);
-void mid_can_apply_cfg(void);
+void mid_can_set_baudrate(long baudrate);
+canStatus mid_can_bus_output(bool swi);
+int mid_can_apply_cfg(void);
 const canBusStatistics *mid_can_process(void);
 void mid_can_clear_stastic_info(void);
 const struct can_bus_frame_t *mid_can_new_frame(void);

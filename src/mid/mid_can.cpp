@@ -18,7 +18,7 @@ struct mid_can_running_t
 	struct list_t *rx_list;
 	struct list_t *tx_list;
     int cur_chn;
-    unsigned int baudrate;
+    long baudrate;
 	int bus_on;
 	canBusStatistics status;
 };
@@ -59,42 +59,55 @@ void mid_can_refresh_device(void)
 void mid_can_set_channel(unsigned int channel)
 {
     if(channel >= CAN_SPPPORT_CHANNELS)
+    {
         return;
+    }
     kvaser.cur_chn = channel;
 
 }
 
-void mid_can_set_baudrate(unsigned int baudrate)
+void mid_can_set_baudrate(long baudrate)
 {
     kvaser.baudrate = baudrate;
 }
 
-void mid_can_apply_cfg(void)
+canStatus mid_can_bus_output(bool swi)
 {
-    canSetBusParams(kvaser.handle, kvaser.baudrate, 0, 0, 0, 0, 0);
-    kvaser.handle = canOpenChannel(kvaser.cur_chn, canOPEN_ACCEPT_VIRTUAL);
-    kvFlashLeds(kvaser.handle, kvLED_ACTION_ALL_LEDS_ON, 2000);
+    return canSetBusOutputControl(kvaser.handle, swi == ON ? canDRIVER_NORMAL : canDRIVER_SILENT);
 }
 
-int mid_can_on_off(void)
+int mid_can_apply_cfg(void)
 {
     if(kvaser.connect == FALSE)
     {
-		kvaser.handle = canOpenChannel(kvaser.cur_chn, canOPEN_ACCEPT_VIRTUAL);
-		canSetBusParams(kvaser.handle, kvaser.baudrate, 0, 0, 0, 0, 0);
-        canBusOn(kvaser.handle);
-        kvaser.bus_on = TRUE;
+        kvaser.handle = canOpenChannel(kvaser.cur_chn, canOPEN_ACCEPT_VIRTUAL);
+        kvFlashLeds(kvaser.handle, kvLED_ACTION_ALL_LEDS_ON, 2000);
         kvaser.connect = TRUE;
     }
     else
     {
-        canBusOff(kvaser.handle);
         canClose(kvaser.handle);
-        kvaser.bus_on = FALSE;
         kvaser.connect = FALSE;
     }
-
     return kvaser.connect;
+}
+
+int mid_can_on_off(void)
+{
+    if(kvaser.bus_on == FALSE)
+    {
+        canSetBusParams(kvaser.handle, kvaser.baudrate, 0, 0, 0, 0, 0);
+        kvaser.handle = canOpenChannel(kvaser.cur_chn, canOPEN_ACCEPT_VIRTUAL);
+        canBusOn(kvaser.handle);
+        kvaser.bus_on = TRUE;
+    }
+    else
+    {
+        canBusOff(kvaser.handle);
+        kvaser.bus_on = FALSE;
+    }
+
+    return kvaser.bus_on;
 }
 
 unsigned int mid_can_get_channels(void)
