@@ -20,7 +20,9 @@ Spark::Spark(QMainWindow *parent) :
 {
     ui->setupUi(this);
     ui->pushButton_2->setEnabled(FALSE);
-
+    ui->lcdNumber->setDigitCount(13);
+    ui->lcdNumber_2->setDigitCount(13);
+    ui->lcdNumber_3->setDigitCount(13);
     // rx_window
     int rx_window_column_width[RX_WINDOW_ITEMS] =
     {
