@@ -12,7 +12,7 @@ TARGET = Spark
 TEMPLATE = app
 
 
-SOURCES += src/app/main.cpp\
+SOURCES += src/app/main.cpp \
             src/app/spark.cpp \
             src/mid/mid_can.cpp \
             src/mid/mid_bits.cpp \

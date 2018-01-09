@@ -4,6 +4,7 @@
 #include <QTableWidget>
 #include <QTableView>
 #include <QHeaderView>
+#include <QDebug>
 
 #include "spark.h"
 #include "ui_spark.h"
@@ -88,15 +89,41 @@ Spark::Spark(QMainWindow *parent) :
         rx.locate[index].mutex = U32_INVALID_VALUE;
     }
     mid_can_init(CAN_DEVICE_KVASER);
-	load_pool = mid_pool_register(20);
+    load_pool = mid_pool_register(10);
     tx.list = mid_can_tx_list();
-    uiTimer.setInterval(5);
+    uiTimer.setInterval(100);
     connect(&uiTimer, SIGNAL(timeout()), this, SLOT(main_window_update()));
+
+    data_thread = new Spark_Thread();
+    connect(data_thread, SIGNAL(threadSignal()), this, SLOT(data_process_slot()));
+    data_thread->start(QThread::NormalPriority);
 }
 
 Spark::~Spark()
 {
     delete ui;
+}
+
+Spark_Thread::Spark_Thread(QObject *parent)
+    : QThread(parent)
+{
+}
+
+void Spark_Thread::run()
+{
+    while(1)
+    {
+        mid_can_process();
+        //qDebug("thread one----------");
+        //emit threadSignal();
+        usleep(1000);
+    }
+    exec();
+}
+
+void Spark::data_process_slot()
+{
+    qDebug("thread aaa----------");
 }
 
 struct data_parse_t * Spark::init_data_parse()
@@ -308,7 +335,7 @@ void Spark::update_receive_message_window()
 
 void Spark::main_window_update()
 {
-    const canBusStatistics *status = mid_can_process();
+    const canBusStatistics *status = mid_can_bus_statistic();
     unsigned long c = status->stdData + status->stdRemote + status->extData + status->extRemote;
 
     ui->lcdNumber->display(QString().setNum(c));

@@ -63,7 +63,6 @@ void mid_can_set_channel(unsigned int channel)
         return;
     }
     kvaser.cur_chn = channel;
-
 }
 
 void mid_can_set_baudrate(long baudrate)
@@ -175,7 +174,6 @@ static void filling_data(void)
             else
                 src.delta_time_stamp = dest->time_stamp - src.time_stamp;
             memcpy(dest, &src, sizeof(*dest));
-
 		}
 	}
 }
@@ -203,20 +201,21 @@ static void tx_process(void)
     }
 }
 
-const canBusStatistics *mid_can_process(void)
+void mid_can_process(void)
 {
-	canStatus stat;
     tx_process();
-	stat = canRequestBusStatistics(kvaser.handle);
-    if(stat < 0)
-    {
-		
-    }else
+    filling_data();
+}
+
+const canBusStatistics *mid_can_bus_statistic(void)
+{
+    canStatus stat;
+
+    stat = canRequestBusStatistics(kvaser.handle);
+    if(stat == canOK)
     {
         stat = canGetBusStatistics(kvaser.handle, &kvaser.status, sizeof(canBusStatistics));
-	}
-
-	filling_data();
+    }
     return &kvaser.status;
 }
 

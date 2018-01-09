@@ -11,6 +11,7 @@
 #include "src/mid/mid_can.h"
 #include "src/mid/mid_list.h"
 #include "src/mid/mid_data.h"
+#include "src/app/spark_thread.h"
 
 #define RX_LISTS_MAX        (500)
 #define RX_WINDOW_ITEMS     (15)
@@ -64,14 +65,29 @@ struct rx_setting_t
     } locate[RX_LISTS_MAX];
 };
 
+class Spark_Thread : public QThread
+{
+  Q_OBJECT
+
+public:
+    Spark_Thread(QObject *parent = 0);
+    void run();
+
+signals:
+    void threadSignal();
+};
+
+
 class Spark : public QMainWindow
 {
     Q_OBJECT
 
 public:
     explicit Spark(QMainWindow *parent = 0);
+
     ~Spark();
 private slots:
+    void data_process_slot();
     void main_window_update();
     void on_comboBox_currentIndexChanged(int index);
     void on_pushButton_8_clicked();
@@ -119,18 +135,19 @@ private slots:
     void on_pushButton_12_clicked();
 
 private:
-void init_dock_window(struct tabel_dock_t *config,
-                            QString window_name,
-                            int window_width,
-                            int window_height,
-                            QString table_head,
-                            int table_columns,
-                            int *column_width);
+    void init_dock_window(struct tabel_dock_t *config,
+                                QString window_name,
+                                int window_width,
+                                int window_height,
+                                QString table_head,
+                                int table_columns,
+                                int *column_width);
     void creat_dock_window(struct tabel_dock_t *config);
     void init_dock_table(struct tabel_dock_t *config);
     void operate_table_line(struct tabel_dock_t *window, int operate, U32 lines);
     void update_receive_message_window();
     void update_rx_parse_line(const struct can_bus_frame_t *frame);
+
     struct data_parse_t *init_data_parse();
     // rx parse
 	struct tabel_dock_t rx_parse_window;
@@ -143,6 +160,8 @@ void init_dock_window(struct tabel_dock_t *config,
     // tx control
     struct tx_setting_t tx;
 
+
+    Spark_Thread *data_thread;
     Ui::Spark *ui;
     QTimer uiTimer;
 };
