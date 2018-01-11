@@ -8,9 +8,9 @@ extern "C" {
 #endif
 
 
-int bits_pack(unsigned char *dest,
+static int bits_pack(unsigned char *dest,
 					unsigned int src,
-					bool bytes_order, 
+					BYTES_ORDER_e bytes_order,
 					unsigned char array_length,
 					unsigned short bit_start,
 					unsigned char bit_length)
@@ -59,9 +59,9 @@ int bits_pack(unsigned char *dest,
     return STATUS_NORMAL;
 }
 
-int bits_pick(unsigned int *dest,
+static int bits_pick(unsigned int *dest,
                     const unsigned char *src,
-                    bool bytes_order,
+                    BYTES_ORDER_e bytes_order,
                     unsigned short array_length,
                     unsigned short bit_start,
                     unsigned char bit_length)
@@ -106,8 +106,8 @@ int bits_pick(unsigned int *dest,
 
 int data_pick(U32 *dest,
 					U8* src,
-					U8 bytes_order,
-					U8 bits_order,
+					BYTES_ORDER_e bytes_order,
+					enum BITS_ORDER_e bits_order,
 					U8 start_bit,
 					U8 bit_length)
 {
@@ -126,8 +126,8 @@ int data_pick(U32 *dest,
 
 int data_pack(U8* dest,
 					U32 src,
-					U8 bytes_order,
-					U8 bits_order,
+					BYTES_ORDER_e bytes_order,
+					BITS_ORDER_e bits_order,
 					U8 start_bit,
 					U8 length)
 {

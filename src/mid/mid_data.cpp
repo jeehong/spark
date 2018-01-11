@@ -7,8 +7,8 @@ extern "C" {
 
 void mid_data_can_calc(struct mid_data_config_t *dest, 
 								U8 *src, 
-								bool bytes_order, 
-								bool bits_order, 
+                                BYTES_ORDER_e bytes_order,
+                                BITS_ORDER_e bits_order,
 								U32 src_length)
 {
     if(dest == NULL)

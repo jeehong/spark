@@ -123,7 +123,7 @@ void Spark_Thread::run()
 
 void Spark::data_process_slot()
 {
-    qDebug("thread aaa----------");
+	
 }
 
 struct data_parse_t * Spark::init_data_parse()
@@ -139,8 +139,8 @@ struct data_parse_t * Spark::init_data_parse()
 	obj->setting.bits_length = 0;
     obj->setting.factor = 1;
     obj->setting.offset = 0;
-	obj->setting.bytes_order = 0;		/* Intel */
-	obj->setting.bits_order = 0; 		/* lsb */
+    obj->setting.bytes_order = CAN_FORMAT_INTEL;	/* Intel */
+    obj->setting.bits_order = CAN_ORDER_LSB; 		/* lsb */
 
     return obj;
 }
@@ -574,13 +574,13 @@ void Spark::on_lineEdit_21_textEdited(const QString &arg1)
 // rx parse moto order
 void Spark::on_checkBox_8_clicked(bool checked)
 {
-    rx_parse->setting.bytes_order = checked;
+    rx_parse->setting.bytes_order = (BYTES_ORDER_e)checked;
 }
 
 // rx parse msb order
 void Spark::on_checkBox_7_clicked(bool checked)
 {
-    rx_parse->setting.bits_order = checked;
+    rx_parse->setting.bits_order = (enum BITS_ORDER_e)checked;
 }
 
 // rx parse start
@@ -872,13 +872,13 @@ void Spark::on_lineEdit_24_textEdited(const QString &arg1)
 // tx parse byte order 1:motorolar 0:intel
 void Spark::on_checkBox_5_clicked(bool checked)
 {
-    tx.parse->setting.bytes_order = checked;
+    tx.parse->setting.bytes_order = (BYTES_ORDER_e)checked;
 }
 
 // tx parse bit order 1:msb 0:lsb
 void Spark::on_checkBox_6_clicked(bool checked)
 {
-    tx.parse->setting.bits_order = checked;
+    tx.parse->setting.bits_order = (enum BITS_ORDER_e)checked;
 }
 
 // tx parse start
