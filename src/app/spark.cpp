@@ -101,6 +101,14 @@ Spark::Spark(QMainWindow *parent) :
 
 Spark::~Spark()
 {
+	destory_dock_window(&rx.window);
+	destory_dock_window(&rx_parse_window);
+	destory_dock_window(&tx.window);
+
+	delete rx_parse;
+	delete tx.parse;
+	delete data_thread;
+	
     delete ui;
 }
 
@@ -382,6 +390,12 @@ void Spark::init_dock_table(tabel_dock_t *config)
         config->table->setColumnWidth(index, config->column_width[index]);
     }
     config->table->show();
+}
+
+void Spark::destory_dock_window(struct tabel_dock_t *config)
+{
+    delete config->table;
+    delete config->model;
 }
 
 void Spark::creat_dock_window(struct tabel_dock_t *config)

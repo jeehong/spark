@@ -144,6 +144,7 @@ private:
                                 int *column_width);
     void creat_dock_window(struct tabel_dock_t *config);
     void init_dock_table(struct tabel_dock_t *config);
+	void destory_dock_window(tabel_dock_t *config);
     void operate_table_line(struct tabel_dock_t *window, int operate, U32 lines);
     void update_receive_message_window();
     void update_rx_parse_line(const struct can_bus_frame_t *frame);
