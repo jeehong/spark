@@ -7,6 +7,17 @@
 extern "C" {
 #endif
 
+const U8 can_map[64] = 
+{ 
+	7, 6, 5, 4, 3, 2, 1, 0,
+	15, 14, 13, 12, 11, 10, 9, 8,	
+	23, 22, 21, 20, 19, 18, 17, 16,
+	31, 30, 29, 28, 27, 26, 25, 24,
+	39, 38, 37, 36, 35, 34, 33, 32,
+	47, 46, 45, 44, 43, 42, 41, 40,
+	55, 54, 53, 52, 51, 50, 49, 48,
+	63, 62, 61, 60, 59, 58, 57, 56
+};
 
 static int bits_pack(unsigned char *dest,
 					unsigned int src,
@@ -117,7 +128,14 @@ int data_pick(U32 *dest,
     }
     if(bits_order == CAN_ORDER_MSB)
     {
-        start_bit=start_bit-bit_length+1;
+    	if(bytes_order == CAN_FORMAT_MOTOROLA)
+    	{
+    		start_bit = can_map[can_map[start_bit] + bit_length];
+    	}
+		else
+		{
+        	start_bit = start_bit- bit_length + 1;
+		}
     }
     bits_pick(dest, src, bytes_order, MAX_DLC, start_bit, bit_length);
 	
@@ -138,7 +156,14 @@ int data_pack(U8* dest,
 
     if(bits_order == CAN_ORDER_MSB)
     {
-        start_bit=start_bit-length+1;
+    	if(bytes_order == CAN_FORMAT_MOTOROLA)
+    	{
+    		start_bit = can_map[can_map[start_bit] + length];
+    	}
+		else
+		{
+        	start_bit = start_bit-length + 1;
+		}
     }
 
     bits_pack(dest, src, bytes_order, MAX_DLC, start_bit, length);
